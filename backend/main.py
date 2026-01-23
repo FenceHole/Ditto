@@ -144,7 +144,8 @@ async def upload_images(
         marketplace_recommendations = await marketplace_selector.select_marketplaces(
             category=analysis_result['category'],
             estimated_price=pricing_data['recommended_price'],
-            item_type=analysis_result['item_name']
+            item_type=analysis_result['item_name'],
+            ebay_sold_data=pricing_data.get('ebay_sold_data')
         )
 
         # Generate listing copy

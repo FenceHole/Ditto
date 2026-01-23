@@ -2,6 +2,12 @@
 
 An AI-powered marketplace listing automation tool that analyzes photos of items you want to sell, determines optimal pricing, recommends the best platforms, generates compelling listing copy, and automates posting to Facebook Marketplace and other platforms.
 
+## 🎯 Why This Bot is Different
+
+**Real Market Data, Not Guesses:** Most pricing tools scrape current listings (seller asking prices). This bot uses **eBay SOLD listings** - actual completed sales showing what buyers really paid. This gives you accurate, data-driven pricing instead of hopeful guesses.
+
+**All-in-One Automation:** Upload photos → Get identification, pricing, platform recommendations, and ready-to-post listings. Everything automated in one workflow.
+
 ## Features
 
 ✨ **AI Image Analysis**
@@ -9,11 +15,14 @@ An AI-powered marketplace listing automation tool that analyzes photos of items 
 - Automatic brand, model, and condition detection
 - Feature extraction and detailed descriptions
 
-💰 **Smart Pricing**
-- Market research-based price recommendations
+💰 **Smart Pricing with Real eBay Sold Data**
+- Uses **actual eBay SOLD listings** (completed sales, not asking prices!)
+- Real market data from what buyers actually paid
+- Statistical analysis of 50+ recent sold items
+- Median, average, and percentile-based recommendations
 - Condition-adjusted pricing
 - Quick-sale vs. optimal price strategies
-- Demand estimation and turnover forecasting
+- Market demand estimation and turnover forecasting
 
 🎯 **Marketplace Selection**
 - Intelligent platform recommendations
@@ -48,8 +57,9 @@ An AI-powered marketplace listing automation tool that analyzes photos of items 
 ### Prerequisites
 
 1. **Python 3.9 or higher**
-2. **Anthropic API Key** - Get one at [console.anthropic.com](https://console.anthropic.com)
-3. **Facebook Access Token** (optional, for automated posting)
+2. **Anthropic API Key** (required) - Get one at [console.anthropic.com](https://console.anthropic.com)
+3. **eBay Developer Account** (highly recommended for accurate pricing) - Sign up at [developer.ebay.com](https://developer.ebay.com)
+4. **Facebook Access Token** (optional, for automated posting)
 
 ### Installation
 
@@ -72,9 +82,17 @@ cp .env.example .env
 
 Edit `.env` and add your API keys:
 ```
+# Required for AI features
 ANTHROPIC_API_KEY=your_key_here
-FACEBOOK_ACCESS_TOKEN=your_token_here  # Optional
-FACEBOOK_PAGE_ID=your_page_id          # Optional
+
+# Highly recommended - for real pricing data
+EBAY_APP_ID=your_ebay_app_id
+EBAY_CERT_ID=your_ebay_cert_id
+EBAY_DEV_ID=your_ebay_dev_id
+
+# Optional - for automated Facebook posting
+FACEBOOK_ACCESS_TOKEN=your_token_here
+FACEBOOK_PAGE_ID=your_page_id
 ```
 
 4. **Start the backend server**
@@ -109,16 +127,21 @@ Then visit `http://localhost:3000/marketplace-app.html`
 - The AI will:
   - Identify the item from your photos
   - Determine brand, model, and features
-  - Research market prices
-  - Recommend optimal selling platforms
+  - **Search eBay sold listings** for real market pricing (actual sales!)
+  - Research market prices using AI + sold data
+  - Recommend optimal selling platforms based on sales velocity
   - Generate compelling listing copy
 
 ### 3. Review Results
 
 Review the generated:
 - **Item identification** - Name, category, brand, features
-- **Pricing recommendations** - Recommended price, quick-sale price, market demand
-- **Marketplace suggestions** - Best platforms ranked by match score
+- **Pricing recommendations** - Based on real eBay sold data:
+  - Recommended price (median of actual sales)
+  - Quick-sale price (25th percentile for fast turnover)
+  - Market demand and sales velocity
+  - Price range from actual sold items
+- **Marketplace suggestions** - Best platforms ranked by match score and sales history
 - **Listing copy** - Title, description, and platform-specific formatting
 
 ### 4. Post to Marketplaces
@@ -164,12 +187,39 @@ Delete listing
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | Yes | Your Anthropic API key for AI features |
+| `ANTHROPIC_API_KEY` | **Yes** | Your Anthropic API key for AI features |
+| `EBAY_APP_ID` | **Recommended** | eBay Application ID (Client ID) for sold listings data |
+| `EBAY_CERT_ID` | **Recommended** | eBay Certificate ID (Client Secret) |
+| `EBAY_DEV_ID` | **Recommended** | eBay Developer ID |
+| `EBAY_AUTH_TOKEN` | No | eBay User Auth Token (for posting, not needed for pricing) |
+| `EBAY_SANDBOX` | No | Set to 'true' for testing (default: false) |
 | `FACEBOOK_ACCESS_TOKEN` | No | Facebook token for automated posting |
 | `FACEBOOK_PAGE_ID` | No | Your Facebook Page ID |
 | `HOST` | No | Server host (default: 0.0.0.0) |
 | `PORT` | No | Server port (default: 8000) |
 | `UPLOAD_DIR` | No | Upload directory path |
+
+### Getting eBay API Credentials (Recommended for Accurate Pricing)
+
+**Why eBay?** The bot uses eBay's **sold listings** (actual completed sales) to determine accurate pricing. Unlike other sources that show asking prices (seller hopes), eBay sold data shows what buyers actually paid - real market value!
+
+1. Go to [developer.ebay.com](https://developer.ebay.com) and create an account
+2. Create an Application:
+   - Click "Create Application Key"
+   - Choose "Production" environment
+   - Fill in application details
+3. Get your credentials:
+   - **App ID (Client ID)** - Your application's identifier
+   - **Cert ID (Client Secret)** - Your application's secret
+   - **Dev ID** - Your developer ID (from account page)
+4. Add credentials to your `.env` file:
+   ```
+   EBAY_APP_ID=YourAppI-YourApp-PRD-abcdef123
+   EBAY_CERT_ID=PRD-abcdef123456
+   EBAY_DEV_ID=your-dev-id
+   ```
+
+**Note:** You only need the Finding API access (which is free) for pricing research. You don't need special permissions or user tokens unless you want to post to eBay (not currently supported).
 
 ### Getting a Facebook Access Token
 
@@ -190,7 +240,8 @@ Ditto/
 │   │   └── database.py        # Data models
 │   ├── services/
 │   │   ├── image_analyzer.py      # Claude Vision integration
-│   │   ├── price_estimator.py     # Pricing engine
+│   │   ├── ebay_service.py        # eBay sold listings search
+│   │   ├── price_estimator.py     # Pricing engine with eBay data
 │   │   ├── marketplace_selector.py # Platform recommendations
 │   │   ├── listing_generator.py   # Copy generation
 │   │   ├── facebook_poster.py     # Facebook API integration
@@ -212,11 +263,21 @@ Uses Claude's Vision API to:
 - Assess visual condition
 - Generate detailed descriptions
 
-### Price Estimation
-Analyzes:
-- Market value for new items
-- Used market prices
-- Condition-based adjustments
+### Price Estimation (eBay Sold Data Integration)
+The pricing engine searches eBay's **completed/sold listings** API to find actual sales:
+- Searches up to 50 recent sold items matching your product
+- Analyzes real prices buyers paid (not seller asking prices)
+- Calculates statistical pricing:
+  - **Median price** - Most reliable center point
+  - **25th percentile** - For quick sales (priced to move)
+  - **75th percentile** - Upper market range
+  - **Average, min, max** - Full price spectrum
+- Market activity analysis:
+  - Sales velocity (how many sold in last 30 days)
+  - Market demand (high/medium/low)
+  - Estimated days to sell
+- AI-enhanced recommendations using sold data + item condition
+- Fallback to AI estimates if eBay data unavailable
 - Seasonal demand factors
 - Brand value impact
 - Quick-sale vs. maximum value tradeoffs

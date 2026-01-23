@@ -82,6 +82,7 @@ class MarketplaceSelector:
         category: str,
         estimated_price: float,
         item_type: str,
+        ebay_sold_data: Dict[str, Any] = None,
         **kwargs
     ) -> List[Dict[str, Any]]:
         """
@@ -91,6 +92,7 @@ class MarketplaceSelector:
             category: Item category
             estimated_price: Estimated price
             item_type: Specific item type
+            ebay_sold_data: eBay sold listings data (boosts eBay score if available)
 
         Returns:
             List of recommended marketplaces with scores
@@ -102,13 +104,30 @@ class MarketplaceSelector:
                 profile, category, estimated_price, item_type
             )
 
+            # Boost eBay score if we have good sold data
+            if marketplace_id == "ebay" and ebay_sold_data and ebay_sold_data.get('success'):
+                sold_count = ebay_sold_data.get('sold_count', 0)
+                if sold_count > 20:
+                    score += 15  # Strong eBay market
+                    reasoning_extra = f" {sold_count} recent sales found on eBay - proven market!"
+                elif sold_count > 10:
+                    score += 10  # Good eBay market
+                    reasoning_extra = f" {sold_count} sales found on eBay - active market"
+                elif sold_count > 5:
+                    score += 5  # Some eBay activity
+                    reasoning_extra = f" {sold_count} sales found on eBay"
+                else:
+                    reasoning_extra = ""
+            else:
+                reasoning_extra = ""
+
             if score > 0:
                 recommendations.append({
                     "marketplace": marketplace_id,
                     "name": profile["name"],
                     "score": score,
                     "priority": self._get_priority_level(score),
-                    "reasoning": self._generate_reasoning(profile, category, score),
+                    "reasoning": self._generate_reasoning(profile, category, score) + reasoning_extra,
                     "fees": profile["fees"],
                     "estimated_speed": profile["speed"],
                     "audience": profile["audience"]
@@ -117,8 +136,8 @@ class MarketplaceSelector:
         # Sort by score (highest first)
         recommendations.sort(key=lambda x: x["score"], reverse=True)
 
-        # Return top 3 recommendations
-        return recommendations[:3]
+        # Return top 4 recommendations (include eBay if it's relevant)
+        return recommendations[:4]
 
     def _calculate_marketplace_score(
         self,
