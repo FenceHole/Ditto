@@ -1,0 +1,43 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Inject Firebase configuration
+        if: ${{ secrets.FIREBASE_CONFIG != '' }}
+        run: |
+          # Create the Firebase config script to inject
+          CONFIG_SCRIPT="<script>window.__firebase_config = ${{ secrets.FIREBASE_CONFIG }};</script>"
+          # Replace the placeholder in index.html with the Firebase config
+          sed -i "s|<!-- FIREBASE_CONFIG_PLACEHOLDER -->|$CONFIG_SCRIPT|g" index.html
+
+      - name: Build project
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          cname: # Add custom domain here if needed
