@@ -1,336 +1,177 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.1">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ditto</title>
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:#080404; color:#fff; }
+    .container{max-width:900px;margin:48px auto;padding:24px}
+    .card{background:#0b0b0b;padding:20px;border-radius:16px;border:1px solid rgba(255,255,255,0.04)}
+    textarea{width:100%;min-height:120px;padding:12px;border-radius:12px;background:#000;border:1px solid rgba(255,255,255,0.06);color:#fff}
+    button{padding:10px 16px;border-radius:12px;background:#c02626;border:none;color:#fff;cursor:pointer}
+    input{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#fff}
+    .entry{padding:10px;border-bottom:1px solid rgba(255,255,255,0.03)}
+    code { background: rgba(255,255,255,0.03); padding:2px 6px; border-radius:4px; font-size:90%; }
   </style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="en"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;Ditto | The Sovereign Court&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- Sovereign Dependencies --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/react@18/umd/react.production.min.js"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/@babel/standalone/babel.min.js"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://unpkg.com/lucide@latest"&gt;&lt;/script&gt;</p>
-<p class="p2"><span class="Apple-converted-space">    </span></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;!-- Firebase - Core logic for Chris &amp; Annie's Connection --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"&gt;&lt;/script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"&gt;&lt;/script&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:italic,wght@400;700;900&amp;family=Inter:wght@300;400;700&amp;display=swap');</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>:root {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--court-black: #050507;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--court-crimson: #7f1d1d;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>--court-gold: #d4af37;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>body {<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-family: 'Playfair Display', serif;<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>background-color: var(--court-black);<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #e2e8f0;<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>overflow-x: hidden;<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.font-sans { font-family: 'Inter', sans-serif; }</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.glass {<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: rgba(255, 255, 255, 0.02);<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>backdrop-filter: blur(15px);<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: 1px solid rgba(255, 255, 255, 0.05);<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.court-gradient {<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: radial-gradient(circle at center, #2d0606 0%, #050507 100%);<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.gold-glow {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.crimson-shadow {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 10px 30px -10px rgba(127, 29, 29, 0.5);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.custom-scrollbar::-webkit-scrollbar { width: 3px; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--court-crimson); border-radius: 10px; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>input::placeholder { opacity: 0.2; }</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>@keyframes pulse-gold {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>0%, 100% { opacity: 0.4; }</p>
-<p class="p1"><span class="Apple-converted-space">            </span>50% { opacity: 1; }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>.animate-gold { animation: pulse-gold 3s infinite; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="root"&gt;&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script type="text/babel"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const { useState, useEffect, useMemo } = React;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// --- FIREBASE CONFIGURATION ---</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const firebaseConfig = JSON.parse(window.__firebase_config || '{}');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (firebaseConfig.apiKey) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>firebase.initializeApp(firebaseConfig);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const auth = firebase.auth?.();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const db = firebase.firestore?.();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const appId = 'ditto-ultimate-sanctuary';</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>const Icon = ({ name, size = 20, className = "" }) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>useEffect(() =&gt; { if(window.lucide) lucide.createIcons(); }, [name]);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>return &lt;i data-lucide={name} style={{ width: size, height: size }} className={className}&gt;&lt;/i&gt;;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>const WingIcon = () =&gt; (</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;svg viewBox="0 0 100 100" className="w-32 h-32 mx-auto text-rose-800 opacity-40 animate-pulse"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;path d="M50 80 Q 10 50 50 20 Q 90 50 50 80" fill="none" stroke="currentColor" strokeWidth="0.5" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;path d="M50 20 L 35 45 M 50 20 L 65 45" stroke="currentColor" strokeWidth="1" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;path d="M30 40 L 70 60 M 70 40 L 30 60" stroke="#d4af37" strokeWidth="0.3" strokeDasharray="2 1" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/svg&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>const App = () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const [view, setView] = useState('setup');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const [user, setUser] = useState(null);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const [sanctuaryId, setSanctuaryId] = useState('');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const [inputKey, setInputKey] = useState('');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const [answer, setAnswer] = useState('');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const [entries, setEntries] = useState([]);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const [copyStatus, setCopyStatus] = useState(false);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// THE INTENTIONAL PROMPTS</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const prompts = [</p>
-<p class="p1"><span class="Apple-converted-space">                </span>{ type: "Sacrifice", q: "Annie, the stories say he gave his wings for her. Chris, what is one 'wing' of your old self you are letting go of to protect Annie today?" },</p>
-<p class="p1"><span class="Apple-converted-space">                </span>{ type: "The Claim", q: "Chris, take the lead. Annie, what is one area of your life where you want Chris to step in and handle the weight so you can just breathe?" },</p>
-<p class="p1"><span class="Apple-converted-space">                </span>{ type: "Camino", q: "We're 'See Through' here. Annie, what's a secret part of your heart that Chris hasn't explored yet but you're ready to show him?" },</p>
-<p class="p1"><span class="Apple-converted-space">                </span>{ type: "Velvet", q: "In the safety of our Court, what is a fantasy you've been afraid to speak? Chris is listening, and there is no judgment here." }</p>
-<p class="p1"><span class="Apple-converted-space">            </span>];</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const currentPrompt = prompts[new Date().getDate() % prompts.length];</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>useEffect(() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const savedKey = localStorage.getItem('ditto_court_v3_id');</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (savedKey) { setSanctuaryId(savedKey); setView('bench'); }</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>auth?.signInAnonymously().catch(console.error);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const unsub = auth?.onAuthStateChanged(setUser);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>return () =&gt; unsub?.();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}, []);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>useEffect(() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (!user || !sanctuaryId || !db) return;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const unsub = db.collection('artifacts').doc(appId).collection('public').doc('data').collection(`court_${sanctuaryId}`)</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>.onSnapshot(snap =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>const data = snap.docs.map(d =&gt; ({ id: d.id, ...d.data() }));</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>setEntries(data.sort((a, b) =&gt; (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)));</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>});</p>
-<p class="p1"><span class="Apple-converted-space">                </span>return () =&gt; unsub();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}, [user, sanctuaryId]);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>const submitEcho = async (cat = 'daily') =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (!answer.trim() || !db) return;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const isChris = user.uid === entries.find(e =&gt; e.userName === 'Chris')?.uid || entries.length === 0;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>await db.collection('artifacts').doc(appId).collection('public').doc('data').collection(`court_${sanctuaryId}`).add({</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>uid: user.uid,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>userName: isChris ? 'Chris' : 'Annie',</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>content: answer,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>category: cat,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>prompt: currentPrompt.q,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>timestamp: firebase.firestore.FieldValue.serverTimestamp()</p>
-<p class="p1"><span class="Apple-converted-space">                </span>});</p>
-<p class="p1"><span class="Apple-converted-space">                </span>setAnswer('');</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if(cat === 'bench') setView('echoes');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (view === 'setup') {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>return (</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div className="min-h-screen court-gradient flex items-center justify-center p-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div className="max-w-md w-full text-center space-y-12 animate-in fade-in zoom-in duration-1000"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;div className="space-y-4"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;WingIcon /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;h1 className="text-7xl font-black italic tracking-tighter text-rose-800 gold-glow"&gt;Ditto.&lt;/h1&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;p className="text-[10px] uppercase tracking-[0.5em] opacity-40 font-sans font-black"&gt;The Sovereign Court of Chris &amp; Annie&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>{!sanctuaryId ? (</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;div className="space-y-6"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;button onClick={() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>const key = Math.random().toString(36).substring(2, 8).toUpperCase();</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>setSanctuaryId(key);</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>localStorage.setItem('ditto_court_v3_id', key);</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>}} className="w-full bg-rose-900 text-white py-5 rounded-full font-sans font-black uppercase tracking-widest text-[10px] crimson-shadow border border-rose-700/30"&gt;Establish Our Court&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;div className="flex items-center gap-4 opacity-20"&gt;&lt;div className="h-[1px] flex-grow bg-current"&gt;&lt;/div&gt;&lt;span className="text-[10px] font-sans"&gt;OR SYNC&lt;/span&gt;&lt;div className="h-[1px] flex-grow bg-current"&gt;&lt;/div&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;input value={inputKey} onChange={e =&gt; setInputKey(e.target.value)} placeholder="ENTER KEY" className="w-full bg-transparent border-b border-rose-900/30 text-center py-4 text-3xl font-sans font-black tracking-[0.5em] outline-none uppercase" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;button onClick={() =&gt; { if(inputKey.length === 6) { setSanctuaryId(inputKey.toUpperCase()); localStorage.setItem('ditto_court_v3_id', inputKey.toUpperCase()); setView('bench'); } }} className="text-[10px] font-sans font-black uppercase tracking-widest text-rose-700 opacity-60"&gt;Connect Hearts&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>) : (</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;div className="space-y-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;div className="p-10 glass rounded-[3rem] border-rose-900/20 shadow-2xl"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>&lt;p className="text-[9px] font-sans font-black uppercase tracking-widest opacity-40 mb-4 italic text-rose-400"&gt;Your Private Sanctuary Key&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>&lt;h2 className="text-5xl font-sans font-black tracking-[0.3em] text-rose-700"&gt;{sanctuaryId}&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>&lt;button onClick={() =&gt; { navigator.clipboard.writeText(sanctuaryId); setCopyStatus(true); setTimeout(()=&gt;setCopyStatus(false), 2000); }} className="text-[10px] font-sans font-black uppercase opacity-40 hover:text-rose-500 transition-all flex items-center gap-2 mx-auto mt-4"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                            </span>&lt;Icon name={copyStatus ? "check-circle" : "share-2"} size={14} /&gt; {copyStatus ? "Copied" : "Copy Key for Annie"}</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;button onClick={() =&gt; setView('bench')} className="bg-rose-900 text-white px-10 py-4 rounded-full text-[10px] font-sans font-black uppercase tracking-widest crimson-shadow hover:scale-105 transition-all"&gt;Enter The Haven&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>)}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>return (</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="min-h-screen bg-[#050507]"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>{/* TOP NAVIGATION */}</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;nav className="px-10 py-8 sticky top-0 z-50 flex justify-between items-center glass border-b border-rose-950/20 bg-black/60"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div className="flex items-center gap-4"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;div className="w-10 h-10 bg-rose-900 rounded-2xl flex items-center justify-center text-white rotate-6 crimson-shadow"&gt;&lt;Icon name="crown" size={20} /&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;h1 className="text-2xl font-black italic tracking-tighter"&gt;Ditto.&lt;/h1&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;p className="text-[8px] font-sans font-black opacity-30 tracking-widest"&gt;COURT KEY: {sanctuaryId}&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div className="text-right"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;p className="text-[8px] font-sans font-black uppercase opacity-20 italic"&gt;Protector Presence&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;p className="text-[10px] font-sans font-bold text-rose-700 tracking-widest uppercase animate-gold"&gt;CHRIS ACTIVE&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/nav&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;main className="max-w-xl mx-auto px-6 py-12 pb-44"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>{/* MODULE SWITCHER */}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;div className="flex p-1.5 rounded-full mb-12 glass shadow-inner border border-white/5"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>{['bench', 'library', 'velvet', 'echoes'].map(tab =&gt; (</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;button key={tab} onClick={() =&gt; setView(tab)} className={`flex-grow py-4 rounded-full transition-all flex flex-col items-center gap-1 ${view === tab ? 'bg-rose-900 text-white crimson-shadow' : 'opacity-30'}`}&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;Icon name={tab === 'bench' ? 'sword' : tab === 'library' ? 'book' : tab === 'velvet' ? 'flame' : 'history'} size={14} /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;span className="text-[7px] font-sans font-black uppercase tracking-widest"&gt;{tab}&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>))}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                        </span>{/* MODULE: THE BENCH */}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>{view === 'bench' &amp;&amp; (</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;div className="space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-1000"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;div className="p-10 rounded-[4rem] glass border-rose-900/20 text-center relative overflow-hidden group"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;div className="inline-flex items-center gap-2 px-4 py-2 bg-rose-900/10 rounded-full mb-10 border border-rose-900/20"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>&lt;Icon name="sparkles" size={14} className="text-rose-700 animate-pulse" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>&lt;span className="text-[10px] font-sans font-black text-rose-700 uppercase tracking-widest italic"&gt;The Daily Mirror&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;h2 className="text-3xl font-medium leading-tight mb-12 italic text-slate-100 px-2 font-serif"&gt;"{currentPrompt.q}"&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;textarea value={answer} onChange={e =&gt; setAnswer(e.target.value)} placeholder="Be see-through, be honest..." className="w-full p-8 rounded-[2.5rem] bg-black/60 border border-white/5 text-sm font-sans outline-none focus:border-rose-900 h-64 mb-10 transition-all focus:ring-8 focus:ring-rose-900/5" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;button onClick={() =&gt; submitEcho('bench')} className="w-full bg-rose-900 text-white py-6 rounded-[2rem] font-sans font-black uppercase tracking-[0.3em] text-[10px] crimson-shadow hover:bg-rose-800 active:scale-95 transition-all"&gt;Ditto This Vow&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;div className="p-8 glass rounded-[3rem] border-rose-900/20 flex gap-6 items-start"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;Icon name="shield-check" className="text-rose-700 shrink-0 mt-1" size={24} /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>&lt;p className="text-[10px] font-sans font-black uppercase text-rose-400 italic mb-1"&gt;Chris's Vow of Protection&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>&lt;p className="text-[11px] font-sans opacity-50 leading-relaxed italic"&gt;Annie, this space is governed by Chris's strength. Your vulnerability here is safe, sacred, and protected. You can speak without fear.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>)}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                        </span>{/* MODULE: VELVET VAULT */}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>{view === 'velvet' &amp;&amp; (</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;div className="space-y-10 animate-in zoom-in duration-700"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;div className="bg-[#120505] p-12 rounded-[4rem] border-2 border-rose-900/30 text-center relative overflow-hidden"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;Icon name="flame" size={80} className="text-rose-950 mx-auto mb-8 opacity-20" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;h3 className="text-4xl font-black italic tracking-tighter text-white mb-6"&gt;The Boundless Haven.&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;p className="text-[10px] text-rose-700 font-sans font-black uppercase tracking-[0.4em] mb-12 italic"&gt;STRETCH LIMITS. NO JUDGMENT.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;p className="text-xs opacity-50 font-sans leading-relaxed mb-10 italic"&gt;Annie, this is for the things you thought you had to hide. Chris is ready to be there with you in every shadow. Share your kinks, your fantasies, and your deepest cravings.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;textarea value={answer} onChange={e =&gt; setAnswer(e.target.value)} placeholder="Unleash the shadows..." className="w-full p-8 rounded-[3rem] bg-black/80 border border-rose-950 text-sm h-64 mb-10 outline-none focus:border-rose-700 transition-all text-rose-100 font-sans" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;button onClick={() =&gt; submitEcho('velvet')} className="w-full bg-rose-950 text-rose-600 py-6 rounded-full font-sans font-black uppercase tracking-widest text-[11px] border border-rose-900/50 shadow-xl shadow-rose-900/10 hover:bg-rose-900 hover:text-white transition-all"&gt;Trust Chris With This&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>)}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                        </span>{/* MODULE: ECHOES */}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>{view === 'echoes' &amp;&amp; (</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;div className="space-y-10 animate-in fade-in duration-500"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;div className="flex justify-between items-center px-4"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;h3 className="text-[11px] font-sans font-black text-slate-500 uppercase tracking-[0.4em] italic"&gt;The Archive of Us&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;Icon name="history" size={16} className="text-slate-600" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>{entries.length === 0 ? (</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;div className="py-40 text-center opacity-10"&gt;&lt;WingIcon /&gt;&lt;p className="text-[10px] font-sans uppercase font-black tracking-widest mt-8 italic"&gt;The story is waiting for your ink.&lt;/p&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>) : (</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>entries.map(e =&gt; (</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>&lt;div key={e.id} className="p-10 rounded-[3.5rem] glass border-rose-900/10 relative group mb-8 transition-all hover:border-rose-900/30"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                            </span>&lt;div className="flex justify-between items-center mb-10"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                                </span>&lt;div className="flex items-center gap-4"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                                    </span>&lt;div className={`w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-sans font-black italic shadow-inner ${e.userName === 'Chris' ? 'bg-rose-900 text-white' : 'bg-slate-800 text-slate-300'}`}&gt;{e.userName === 'Chris' ? 'C' : 'A'}&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                                    </span>&lt;div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                                        </span>&lt;span className="text-[11px] font-sans font-black uppercase tracking-widest text-rose-700 italic block"&gt;{e.userName}&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                                        </span>&lt;span className="text-[8px] font-sans opacity-20 uppercase font-black tracking-[0.2em]"&gt;{e.userName === 'Chris' ? 'The Protector' : 'The Heart'}&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                                    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                                </span>&lt;span className={`text-[8px] font-sans font-black uppercase px-3 py-1 rounded-full border ${e.category === 'velvet' ? 'bg-rose-950/20 text-rose-500 border-rose-900/30' : 'bg-rose-900/10 text-rose-700 border-rose-900/20'}`}&gt;{e.category}&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                            </span>&lt;p className="text-sm md:text-base leading-relaxed opacity-90 italic font-serif px-2 font-medium"&gt;"{e.content}"&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                            </span>&lt;div className="mt-10 flex justify-between items-center opacity-10"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                                </span>&lt;span className="text-[8px] font-sans font-black uppercase tracking-widest"&gt;{new Date(e.timestamp?.seconds * 1000).toLocaleDateString()}&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                                </span>&lt;Icon name="heart" size={12} className="fill-current" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>))</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>)}</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>)}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                        </span>{/* MODULE: LIBRARY */}</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>{view === 'library' &amp;&amp; (</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;div className="space-y-10 animate-in zoom-in duration-700"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;div className="bg-rose-950/10 border border-rose-900/20 p-12 rounded-[4rem] relative overflow-hidden"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;Icon name="book-open" size={140} className="absolute -bottom-10 -right-10 opacity-5 rotate-12" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;h3 className="text-3xl font-black italic tracking-tighter text-rose-700 mb-6 underline decoration-rose-900/30"&gt;The Storybook Haven.&lt;/h3&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;p className="text-xs opacity-60 font-sans leading-relaxed font-medium mb-12 italic"&gt;Annie, this is where we map the worlds you love. Tell Chris about the heroes that make you feel safe, the sacrifices that move you, and the romance you crave. We are writing our own series now.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;div className="grid grid-cols-1 gap-6"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>{[</p>
-<p class="p1"><span class="Apple-converted-space">                                            </span>"Annie, if Chris were a character in your favorite series, what magic would he use to guard you?",</p>
-<p class="p1"><span class="Apple-converted-space">                                            </span>"What is the most romantic 'sacrifice' you've ever read about? Could we do that here?",</p>
-<p class="p1"><span class="Apple-converted-space">                                            </span>"Chris, name one storybook hero trait you are adopting for Annie today."</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>].map((q, i) =&gt; (</p>
-<p class="p1"><span class="Apple-converted-space">                                            </span>&lt;button key={i} onClick={() =&gt; { setView('bench'); setAnswer(`Library Note: ${q}\n\n`); }} className="p-8 bg-black/40 border border-white/5 rounded-[2.5rem] text-left text-xs italic opacity-40 hover:opacity-100 hover:border-rose-900 transition-all font-sans"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                                </span>{q}</p>
-<p class="p1"><span class="Apple-converted-space">                                            </span>&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                        </span>))}</p>
-<p class="p1"><span class="Apple-converted-space">                                    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>)}</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/main&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>{/* FIXED FOOTER NAVIGATION */}</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;footer className="fixed bottom-0 left-0 right-0 p-10 flex justify-around items-center glass border-t border-rose-950/20 bg-black/90 z-50"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>{['bench', 'library', 'velvet', 'echoes'].map(tab =&gt; (</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;button key={tab} onClick={() =&gt; setView(tab)} className={`transition-all duration-300 ${view === tab ? 'text-rose-700 scale-150' : 'text-slate-600 opacity-40 hover:opacity-80'}`}&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>&lt;Icon name={tab === 'bench' ? 'sword' : tab === 'library' ? 'book' : tab === 'velvet' ? 'flame' : 'history'} size={28} /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>))}</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/footer&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>const root = ReactDOM.createRoot(document.getElementById('root'));</p>
-<p class="p1"><span class="Apple-converted-space">        </span>root.render(&lt;App /&gt;);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+  <div id="root" class="container"></div>
+
+  <!-- Optional: projects can set window.__firebase_config before the app script to initialize Firebase.
+       Example (do NOT commit real secrets into the repo):
+  <script>
+    window.__firebase_config = JSON.stringify({
+      apiKey: "YOUR_API_KEY",
+      authDomain: "your-project.firebaseapp.com",
+      projectId: "your-project-id",
+      // ...other firebase config
+    });
+  </script>
+  -->
+
+  <!-- Firebase compat (keeps existing firebase.* API usage working) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+  <!-- React + ReactDOM UMD (development builds for quick restore) -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+  <!-- Babel standalone to allow JSX in the browser (development only) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // App ID used in the original repo; keep consistent with collection paths
+    const appId = 'ditto_court_v3';
+
+    // Read optional firebase config provided via window.__firebase_config
+    const firebaseConfig = (() => {
+      try {
+        return JSON.parse(window.__firebase_config || '{}');
+      } catch (e) {
+        console.warn('Failed to parse window.__firebase_config', e);
+        return {};
+      }
+    })();
+
+    if (firebaseConfig.apiKey) {
+      try { firebase.initializeApp(firebaseConfig); } catch(e) { console.warn('firebase init', e); }
+    }
+
+    const auth = window.firebase?.auth?.();
+    const db = window.firebase?.firestore?.();
+
+    function App(){
+      const [view, setView] = useState('setup');
+      const [user, setUser] = useState(null);
+      const [sanctuaryId, setSanctuaryId] = useState('');
+      const [inputKey, setInputKey] = useState('');
+      const [answer, setAnswer] = useState('');
+      const [entries, setEntries] = useState([]);
+
+      // On mount: restore saved key and sign in anonymously
+      useEffect(()=>{
+        const savedKey = localStorage.getItem('ditto_court_v3_id');
+        if (savedKey){ setSanctuaryId(savedKey); setView('bench'); }
+
+        if (auth && auth.signInAnonymously){
+          auth.signInAnonymously().catch(console.error);
+          const unsub = auth.onAuthStateChanged(u=>setUser(u));
+          return () => unsub?.();
+        }
+      },[]);
+
+      // Firestore listener for entries in the sanctuary collection
+      useEffect(()=>{
+        if (!user || !sanctuaryId || !db) return;
+        const ref = db.collection('artifacts').doc(appId).collection('public').doc('data').collection(`court_${sanctuaryId}`);
+        const unsub = ref.orderBy('timestamp','desc').onSnapshot(snap => {
+          const data = snap.docs.map(d=>({id:d.id, ...d.data()}));
+          setEntries(data);
+        }, err => console.error('firestore listen error', err));
+        return () => unsub();
+      }, [user, sanctuaryId]);
+
+      const submitEcho = async(cat='daily') => {
+        if (!answer.trim()) return;
+        if (!db || !user) {
+          alert('Database or user not available. Make sure firebase config is set.');
+          return;
+        }
+        const isChris = user.uid === entries.find(e => e.userName === 'Chris')?.uid || entries.length === 0;
+        await db.collection('artifacts').doc(appId).collection('public').doc('data').collection(`court_${sanctuaryId}`).add({
+          uid: user.uid,
+          userName: isChris ? 'Chris' : 'Annie',
+          content: answer,
+          category: cat,
+          prompt: 'user submitted',
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        setAnswer('');
+        if (cat === 'bench') setView('echoes');
+      };
+
+      if (view === 'setup'){
+        return (
+          <div className="card">
+            <h2>Welcome to Ditto</h2>
+            <p>Enter a 6-character court key or create one</p>
+            <div style={{display:'flex',gap:8,marginTop:12}}>
+              <input value={inputKey} onChange={e=>setInputKey(e.target.value.toUpperCase())} placeholder="KEY" />
+              <button onClick={()=>{ if (inputKey.length===6){ setSanctuaryId(inputKey.toUpperCase()); localStorage.setItem('ditto_court_v3_id', inputKey.toUpperCase()); setView('bench'); }}}>Connect Hearts</button>
+            </div>
+
+            <div style={{marginTop:16}}>
+              <button onClick={()=>{ const key = Math.random().toString(36).substring(2,8).toUpperCase(); setSanctuaryId(key); localStorage.setItem('ditto_court_v3_id', key); setView('bench'); }}>Establish Our Court</button>
+            </div>
+
+            <div style={{marginTop:18}}>
+              <p style={{opacity:0.6,fontSize:13}}>CURRENT KEY: {sanctuaryId || '(none)'}</p>
+            </div>
+
+            <div style={{marginTop:18}}>
+              <p style={{opacity:0.6,fontSize:13}}>To use realtime features you must provide Firebase config via <code>window.__firebase_config</code>.</p>
+            </div>
+          </div>
+        );
+      }
+
+      // Bench / main view
+      return (
+        <div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+            <h1>Ditto.</h1>
+            <div>COURT KEY: {sanctuaryId}</div>
+          </div>
+
+          <div className="card">
+            <h3>Make a Vow</h3>
+            <textarea value={answer} onChange={e=>setAnswer(e.target.value)} placeholder="Unleash the shadows..." />
+            <div style={{marginTop:12,display:'flex',gap:8}}>
+              <button onClick={()=>submitEcho('bench')}>Ditto This Vow</button>
+              <button onClick={()=>{ setView('setup'); localStorage.removeItem('ditto_court_v3_id'); setSanctuaryId(''); }}>Leave Court</button>
+            </div>
+          </div>
+
+          <div className="card" style={{marginTop:16}}>
+            <h3>The Archive of Us</h3>
+            {entries.length===0 ? <p>No entries yet.</p> : entries.map(e=> (
+              <div key={e.id} className="entry">
+                <strong>{e.userName}</strong> <span style={{opacity:0.6,fontSize:12}}>{e.timestamp?.toDate ? e.timestamp.toDate().toLocaleString() : ''}</span>
+                <div style={{marginTop:6}}>{e.content}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
 </body>
 </html>
