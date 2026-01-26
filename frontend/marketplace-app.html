@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace Bot Analyzer</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+        .upload-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-zone:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        .upload-zone.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        .image-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin: 8px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const API_BASE = 'http://localhost:8000/api';
+
+        function MarketplaceApp() {
+            const [currentView, setCurrentView] = useState('upload');
+            const [files, setFiles] = useState([]);
+            const [condition, setCondition] = useState('good');
+            const [additionalNotes, setAdditionalNotes] = useState('');
+            const [analyzing, setAnalyzing] = useState(false);
+            const [analysisResult, setAnalysisResult] = useState(null);
+            const [listings, setListings] = useState([]);
+            const [dragOver, setDragOver] = useState(false);
+
+            useEffect(() => {
+                if (currentView === 'history') {
+                    loadListings();
+                }
+            }, [currentView]);
+
+            const loadListings = async () => {
+                try {
+                    const response = await fetch(`${API_BASE}/listings`);
+                    const data = await response.json();
+                    setListings(data.listings || []);
+                } catch (error) {
+                    console.error('Error loading listings:', error);
+                }
+            };
+
+            const handleFileSelect = (e) => {
+                const selectedFiles = Array.from(e.target.files);
+                setFiles(prev => [...prev, ...selectedFiles]);
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                setDragOver(false);
+                const droppedFiles = Array.from(e.dataTransfer.files);
+                setFiles(prev => [...prev, ...droppedFiles]);
+            };
+
+            const removeFile = (index) => {
+                setFiles(prev => prev.filter((_, i) => i !== index));
+            };
+
+            const analyzeItems = async () => {
+                if (files.length === 0) {
+                    alert('Please upload at least one photo');
+                    return;
+                }
+
+                setAnalyzing(true);
+
+                try {
+                    const formData = new FormData();
+                    files.forEach(file => formData.append('files', file));
+                    formData.append('condition', condition);
+                    if (additionalNotes) {
+                        formData.append('additional_notes', additionalNotes);
+                    }
+
+                    const response = await fetch(`${API_BASE}/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        setAnalysisResult(data);
+                        setCurrentView('results');
+                    } else {
+                        alert('Analysis failed: ' + (data.detail || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to analyze items. Make sure the backend is running.');
+                } finally {
+                    setAnalyzing(false);
+                }
+            };
+
+            const postToMarketplace = async (marketplace) => {
+                if (!analysisResult) return;
+
+                try {
+                    const response = await fetch(`${API_BASE}/post`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            item_id: analysisResult.item_id,
+                            marketplaces: [marketplace],
+                            auto_post: false
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert(`Successfully prepared listing for ${marketplace}!`);
+                    } else {
+                        alert('Posting failed: ' + (data.detail || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to post listing');
+                }
+            };
+
+            const resetUpload = () => {
+                setFiles([]);
+                setCondition('good');
+                setAdditionalNotes('');
+                setAnalysisResult(null);
+                setCurrentView('upload');
+            };
+
+            return (
+                <div className="min-h-screen">
+                    {/* Header */}
+                    <div className="gradient-bg text-white py-6 shadow-lg">
+                        <div className="container mx-auto px-4">
+                            <h1 className="text-3xl font-bold mb-2">🤖 Marketplace Bot Analyzer</h1>
+                            <p className="text-blue-100">AI-powered marketplace listing automation</p>
+                        </div>
+                    </div>
+
+                    {/* Navigation */}
+                    <div className="bg-white shadow-sm border-b">
+                        <div className="container mx-auto px-4">
+                            <div className="flex gap-4 py-4">
+                                <button
+                                    className={`px-4 py-2 rounded-lg font-medium ${currentView === 'upload' ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-gray-100'}`}
+                                    onClick={() => setCurrentView('upload')}
+                                >
+                                    📤 Upload
+                                </button>
+                                {analysisResult && (
+                                    <button
+                                        className={`px-4 py-2 rounded-lg font-medium ${currentView === 'results' ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-gray-100'}`}
+                                        onClick={() => setCurrentView('results')}
+                                    >
+                                        📊 Results
+                                    </button>
+                                )}
+                                <button
+                                    className={`px-4 py-2 rounded-lg font-medium ${currentView === 'history' ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:bg-gray-100'}`}
+                                    onClick={() => setCurrentView('history')}
+                                >
+                                    📋 History
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="container mx-auto px-4 py-8 max-w-6xl">
+                        {currentView === 'upload' && (
+                            <UploadView
+                                files={files}
+                                condition={condition}
+                                additionalNotes={additionalNotes}
+                                analyzing={analyzing}
+                                dragOver={dragOver}
+                                setCondition={setCondition}
+                                setAdditionalNotes={setAdditionalNotes}
+                                handleFileSelect={handleFileSelect}
+                                handleDrop={handleDrop}
+                                setDragOver={setDragOver}
+                                removeFile={removeFile}
+                                analyzeItems={analyzeItems}
+                            />
+                        )}
+
+                        {currentView === 'results' && analysisResult && (
+                            <ResultsView
+                                result={analysisResult}
+                                postToMarketplace={postToMarketplace}
+                                resetUpload={resetUpload}
+                            />
+                        )}
+
+                        {currentView === 'history' && (
+                            <HistoryView listings={listings} />
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function UploadView({ files, condition, additionalNotes, analyzing, dragOver, setCondition, setAdditionalNotes, handleFileSelect, handleDrop, setDragOver, removeFile, analyzeItems }) {
+            return (
+                <div>
+                    <div className="card">
+                        <h2 className="text-2xl font-bold mb-4">Upload Item Photos</h2>
+
+                        <div
+                            className={`upload-zone ${dragOver ? 'dragover' : ''}`}
+                            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                            onDragLeave={() => setDragOver(false)}
+                            onDrop={handleDrop}
+                            onClick={() => document.getElementById('fileInput').click()}
+                        >
+                            <div className="text-6xl mb-4">📸</div>
+                            <p className="text-lg font-semibold mb-2">Drop photos here or click to browse</p>
+                            <p className="text-gray-500 text-sm">Upload up to 10 photos of your item</p>
+                            <input
+                                id="fileInput"
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                onChange={handleFileSelect}
+                                style={{ display: 'none' }}
+                            />
+                        </div>
+
+                        {files.length > 0 && (
+                            <div className="mt-6">
+                                <h3 className="font-semibold mb-3">Selected Photos ({files.length})</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {files.map((file, index) => (
+                                        <div key={index} className="relative">
+                                            <img
+                                                src={URL.createObjectURL(file)}
+                                                alt={file.name}
+                                                className="image-preview"
+                                            />
+                                            <button
+                                                onClick={() => removeFile(index)}
+                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="card">
+                        <h3 className="text-xl font-bold mb-4">Item Details</h3>
+
+                        <div className="mb-4">
+                            <label className="block font-semibold mb-2">Condition</label>
+                            <select
+                                value={condition}
+                                onChange={(e) => setCondition(e.target.value)}
+                                className="w-full p-3 border rounded-lg"
+                            >
+                                <option value="new">New</option>
+                                <option value="like-new">Like New</option>
+                                <option value="good">Good</option>
+                                <option value="fair">Fair</option>
+                                <option value="poor">Poor</option>
+                            </select>
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block font-semibold mb-2">Additional Notes (Optional)</label>
+                            <textarea
+                                value={additionalNotes}
+                                onChange={(e) => setAdditionalNotes(e.target.value)}
+                                placeholder="Any additional details about the item..."
+                                className="w-full p-3 border rounded-lg h-24"
+                            />
+                        </div>
+
+                        <button
+                            onClick={analyzeItems}
+                            disabled={analyzing || files.length === 0}
+                            className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {analyzing ? '🔄 Analyzing...' : '🚀 Analyze & Generate Listing'}
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        function ResultsView({ result, postToMarketplace, resetUpload }) {
+            return (
+                <div>
+                    {/* Analysis Results */}
+                    <div className="card">
+                        <h2 className="text-2xl font-bold mb-4">📊 Analysis Results</h2>
+
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 className="font-bold text-lg mb-2">Item Identification</h3>
+                                <p className="text-2xl mb-2">{result.analysis.item_name}</p>
+                                <p className="text-gray-600 mb-2">{result.analysis.category}</p>
+                                {result.analysis.brand && (
+                                    <p className="text-gray-600">Brand: {result.analysis.brand}</p>
+                                )}
+                                <p className="mt-3 text-gray-700">{result.analysis.description}</p>
+                            </div>
+
+                            <div>
+                                <h3 className="font-bold text-lg mb-2">Key Features</h3>
+                                <ul className="list-disc pl-5 space-y-1">
+                                    {result.analysis.features?.map((feature, i) => (
+                                        <li key={i} className="text-gray-700">{feature}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Pricing */}
+                    <div className="card">
+                        <h2 className="text-2xl font-bold mb-4">💰 Pricing Recommendations</h2>
+
+                        <div className="grid md:grid-cols-3 gap-4">
+                            <div className="bg-purple-50 p-4 rounded-lg">
+                                <p className="text-sm text-gray-600 mb-1">Recommended Price</p>
+                                <p className="text-3xl font-bold text-purple-700">
+                                    ${result.pricing.recommended_price}
+                                </p>
+                                <p className="text-sm text-gray-600 mt-2">Balanced pricing</p>
+                            </div>
+
+                            <div className="bg-green-50 p-4 rounded-lg">
+                                <p className="text-sm text-gray-600 mb-1">Quick Sale Price</p>
+                                <p className="text-3xl font-bold text-green-700">
+                                    ${result.pricing.quick_sale_price}
+                                </p>
+                                <p className="text-sm text-gray-600 mt-2">Fast turnaround</p>
+                            </div>
+
+                            <div className="bg-blue-50 p-4 rounded-lg">
+                                <p className="text-sm text-gray-600 mb-1">Market Demand</p>
+                                <p className="text-3xl font-bold text-blue-700 capitalize">
+                                    {result.pricing.market_demand}
+                                </p>
+                                <p className="text-sm text-gray-600 mt-2">
+                                    {result.pricing.turnover_estimate}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                            <p className="text-sm font-semibold mb-2">Pricing Strategy</p>
+                            <p className="text-gray-700">{result.pricing.pricing_strategy}</p>
+                        </div>
+
+                        {/* eBay Sold Data Section */}
+                        {result.pricing.ebay_sold_data && result.pricing.ebay_sold_data.success && (
+                            <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                                <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                                    <span>📊 eBay Sold Data (Real Sales)</span>
+                                    <span className="badge badge-success text-xs">VERIFIED</span>
+                                </h3>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                                    <div>
+                                        <p className="text-xs text-gray-600">Total Sold</p>
+                                        <p className="text-xl font-bold text-blue-700">{result.pricing.ebay_sold_data.sold_count}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-600">Median Price</p>
+                                        <p className="text-xl font-bold text-blue-700">${result.pricing.ebay_sold_data.median_price}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-600">Price Range</p>
+                                        <p className="text-sm font-semibold text-blue-700">
+                                            ${result.pricing.ebay_sold_data.min_price} - ${result.pricing.ebay_sold_data.max_price}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-600">Recent Sales</p>
+                                        <p className="text-xl font-bold text-blue-700">{result.pricing.ebay_sold_data.recent_sales_count}</p>
+                                        <p className="text-xs text-gray-500">Last 30 days</p>
+                                    </div>
+                                </div>
+
+                                <p className="text-sm text-gray-700 mb-2">
+                                    <strong>Market Insight:</strong> {result.pricing.ebay_sold_data.market_insight}
+                                </p>
+
+                                {result.pricing.ebay_sold_data.sold_listings && result.pricing.ebay_sold_data.sold_listings.length > 0 && (
+                                    <div className="mt-3">
+                                        <p className="text-xs font-semibold text-gray-600 mb-2">Recent Actual Sales:</p>
+                                        <div className="space-y-1">
+                                            {result.pricing.ebay_sold_data.sold_listings.slice(0, 3).map((listing, i) => (
+                                                <div key={i} className="text-xs bg-white p-2 rounded flex justify-between">
+                                                    <span className="text-gray-700 truncate flex-1">{listing.title}</span>
+                                                    <span className="font-bold text-green-600 ml-2">${listing.total_price.toFixed(2)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {result.pricing.data_source && (
+                            <div className="mt-3 text-xs text-gray-500 text-center">
+                                Data Source: {result.pricing.data_source}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Marketplaces */}
+                    <div className="card">
+                        <h2 className="text-2xl font-bold mb-4">🎯 Recommended Marketplaces</h2>
+
+                        <div className="space-y-4">
+                            {result.marketplaces?.map((marketplace, i) => (
+                                <div key={i} className="border rounded-lg p-4 hover:bg-gray-50">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 className="font-bold text-lg">{marketplace.name}</h3>
+                                            <span className={`badge badge-${marketplace.priority === 'high' ? 'success' : marketplace.priority === 'medium' ? 'warning' : 'info'}`}>
+                                                {marketplace.priority.toUpperCase()} PRIORITY
+                                            </span>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-2xl font-bold text-purple-600">{marketplace.score}</p>
+                                            <p className="text-xs text-gray-500">Match Score</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-gray-700 mb-2">{marketplace.reasoning}</p>
+                                    <div className="text-sm text-gray-600 space-y-1">
+                                        <p>💵 {marketplace.fees}</p>
+                                        <p>⚡ {marketplace.estimated_speed}</p>
+                                        <p>👥 {marketplace.audience}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Listing Copy */}
+                    <div className="card">
+                        <h2 className="text-2xl font-bold mb-4">✍️ Generated Listing</h2>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="font-semibold block mb-2">Title</label>
+                                <input
+                                    type="text"
+                                    value={result.listing.title}
+                                    readOnly
+                                    className="w-full p-3 border rounded-lg bg-gray-50"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="font-semibold block mb-2">Facebook Marketplace Copy</label>
+                                <textarea
+                                    value={result.listing.facebook_copy}
+                                    readOnly
+                                    className="w-full p-3 border rounded-lg bg-gray-50 h-48"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="font-semibold block mb-2">Key Points</label>
+                                <ul className="list-disc pl-5 space-y-1">
+                                    {result.listing.bullet_points?.map((point, i) => (
+                                        <li key={i} className="text-gray-700">{point}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex gap-3">
+                            <button onClick={() => postToMarketplace('facebook')} className="btn-primary flex-1">
+                                📤 Post to Facebook Marketplace
+                            </button>
+                            <button onClick={resetUpload} className="btn-secondary">
+                                🔄 Start New
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function HistoryView({ listings }) {
+            return (
+                <div className="card">
+                    <h2 className="text-2xl font-bold mb-4">📋 Listing History</h2>
+
+                    {listings.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500">
+                            <p className="text-xl">No listings yet</p>
+                            <p className="text-sm mt-2">Upload photos to create your first listing</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {listings.map((listing) => (
+                                <div key={listing.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <h3 className="font-bold text-lg">{listing.item_name}</h3>
+                                            <p className="text-gray-600">{listing.category}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-xl">
+                                                ${listing.pricing_data?.recommended_price || 0}
+                                            </p>
+                                            <span className={`badge badge-${listing.status === 'posted' ? 'success' : listing.status === 'draft' ? 'warning' : 'info'}`}>
+                                                {listing.status.toUpperCase()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <p className="text-sm text-gray-500 mt-2">
+                                        Created: {new Date(listing.created_at).toLocaleDateString()}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<MarketplaceApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
