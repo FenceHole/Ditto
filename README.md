@@ -45,7 +45,9 @@ An AI-powered marketplace listing automation tool that analyzes photos of items 
 - Python 3.9+
 - FastAPI (REST API)
 - Anthropic Claude API (Vision & Text)
-- JSON-based database (upgradeable to PostgreSQL/MongoDB)
+- Database: JSON (development) / PostgreSQL / MongoDB (production)
+- SQLAlchemy (async ORM for PostgreSQL)
+- Motor (async driver for MongoDB)
 
 **Frontend:**
 - React 18
@@ -60,6 +62,9 @@ An AI-powered marketplace listing automation tool that analyzes photos of items 
 2. **Anthropic API Key** (required) - Get one at [console.anthropic.com](https://console.anthropic.com)
 3. **eBay Developer Account** (highly recommended for accurate pricing) - Sign up at [developer.ebay.com](https://developer.ebay.com)
 4. **Facebook Access Token** (optional, for automated posting)
+5. **Database** (optional for production):
+   - PostgreSQL 12+ OR
+   - MongoDB 4.4+
 
 ### Installation
 
@@ -320,17 +325,102 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ### Running Tests
 
+The project includes comprehensive integration tests:
+
 ```bash
-pytest tests/
+cd backend
+pytest tests/ -v
+```
+
+Run specific test categories:
+```bash
+# Run only fast tests
+pytest tests/ -v -m "not slow"
+
+# Run with coverage report
+pytest tests/ -v --cov=. --cov-report=html
 ```
 
 ### Database
 
-Currently uses a simple JSON file database for development. For production, migrate to PostgreSQL or MongoDB:
+The application supports three database backends:
 
-```python
-# Update DATABASE_URL in .env
-DATABASE_URL=postgresql://user:password@localhost/marketplace_bot
+#### JSON Database (Default - Development)
+No setup required. Data is stored in `backend/data/listings.json`.
+
+#### PostgreSQL (Recommended for Production)
+
+1. **Install PostgreSQL**
+```bash
+# Ubuntu/Debian
+sudo apt-get install postgresql postgresql-contrib
+
+# macOS
+brew install postgresql
+```
+
+2. **Create Database**
+```bash
+sudo -u postgres psql
+CREATE DATABASE marketplace_bot;
+CREATE USER your_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE marketplace_bot TO your_user;
+\q
+```
+
+3. **Configure Environment**
+```bash
+# In .env file
+DATABASE_URL=postgresql+asyncpg://your_user:your_password@localhost:5432/marketplace_bot
+```
+
+4. **Initialize Database**
+The tables will be created automatically on first run.
+
+5. **Migrate from JSON (Optional)**
+```bash
+cd backend
+python scripts/migrate_database.py \
+  --from json \
+  --to postgres \
+  --json-path ./data/listings.json \
+  --target-url "postgresql+asyncpg://user:password@localhost:5432/marketplace_bot"
+```
+
+#### MongoDB (Alternative for Production)
+
+1. **Install MongoDB**
+```bash
+# Ubuntu/Debian
+sudo apt-get install mongodb
+
+# macOS
+brew install mongodb-community
+```
+
+2. **Start MongoDB**
+```bash
+mongod --dbpath /path/to/data/directory
+```
+
+3. **Configure Environment**
+```bash
+# In .env file
+DATABASE_URL=mongodb://localhost:27017
+MONGO_DB_NAME=marketplace_bot
+```
+
+4. **Initialize Database**
+Collections and indexes will be created automatically on first run.
+
+5. **Migrate from JSON (Optional)**
+```bash
+cd backend
+python scripts/migrate_database.py \
+  --from json \
+  --to mongodb \
+  --json-path ./data/listings.json \
+  --target-url "mongodb://localhost:27017"
 ```
 
 ## Troubleshooting
@@ -354,18 +444,60 @@ DATABASE_URL=postgresql://user:password@localhost/marketplace_bot
 - Ensure images are valid formats (JPG, PNG, GIF, WebP)
 - Check storage directory permissions
 
+### Database Connection Errors
+
+**PostgreSQL:**
+```bash
+# Check if PostgreSQL is running
+sudo systemctl status postgresql
+
+# Test connection
+psql -U your_user -d marketplace_bot -h localhost
+```
+
+**MongoDB:**
+```bash
+# Check if MongoDB is running
+sudo systemctl status mongod
+
+# Test connection
+mongo mongodb://localhost:27017
+```
+
+**Common Issues:**
+- Wrong credentials in DATABASE_URL
+- Database server not running
+- Firewall blocking connection
+- Database doesn't exist (create it first)
+
+### Migration Issues
+- Ensure source JSON file exists and is valid
+- Check target database is accessible
+- Verify DATABASE_URL format is correct
+- Check logs for specific error messages
+
+### Performance Issues
+- For large datasets, use PostgreSQL or MongoDB instead of JSON
+- Increase database connection pool size in production
+- Enable database query logging to identify slow queries
+
 ## Roadmap
 
-- [ ] eBay API integration
+- [x] PostgreSQL/MongoDB database support
+- [x] Comprehensive integration testing
+- [x] Database migration tools
+- [x] Enhanced error handling and logging
+- [ ] eBay API integration for posting
 - [ ] Craigslist posting automation
 - [ ] Mercari integration
 - [ ] Bulk upload and batch processing
-- [ ] PostgreSQL/MongoDB migration
 - [ ] Mobile app (React Native)
 - [ ] Price tracking and repricing
 - [ ] Automated listing renewals
 - [ ] Multi-user support
 - [ ] Analytics dashboard
+- [ ] API rate limiting and caching
+- [ ] Automated backup and recovery
 
 ## Contributing
 
