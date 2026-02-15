@@ -1,0 +1,55 @@
+# Marketplace Bot Analyzer - Git Ignore
+
+# Environment variables and secrets
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Data and uploads
+backend/data/
+backend/storage/
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Node modules (if adding Node.js tooling)
+node_modules/
+package-lock.json
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
