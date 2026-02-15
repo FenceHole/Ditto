@@ -9,6 +9,10 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 import base64
 
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 class eBayService:
     """eBay API integration for sold listings research and posting"""
@@ -54,6 +58,7 @@ class eBayService:
             Dictionary with sold listings data and pricing analysis
         """
         if not self.app_id:
+            logger.warning("eBay API credentials not configured, using mock data")
             return self._mock_sold_data(keywords)
 
         try:
@@ -91,16 +96,31 @@ class eBayService:
             filter_index += 1
 
             # Make API request
-            response = requests.get(self.finding_api_url, params=params)
+            response = requests.get(self.finding_api_url, params=params, timeout=10)
             response.raise_for_status()
 
             data = response.json()
+            
+            # Check for API errors
+            if 'errorMessage' in data:
+                error_msg = data['errorMessage'][0]
+                logger.error(f"eBay API error: {error_msg.get('error', {}).get('message', 'Unknown error')}")
+                return self._mock_sold_data(keywords)
 
             # Parse results
             return self._parse_sold_listings(data, keywords)
 
+        except requests.exceptions.Timeout:
+            logger.error(f"eBay API timeout for keywords: {keywords}")
+            return self._mock_sold_data(keywords)
+        except requests.exceptions.ConnectionError:
+            logger.error(f"eBay API connection error for keywords: {keywords}")
+            return self._mock_sold_data(keywords)
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"eBay API HTTP error {e.response.status_code}: {e.response.text}")
+            return self._mock_sold_data(keywords)
         except Exception as e:
-            print(f"Error searching eBay sold listings: {str(e)}")
+            logger.error(f"Error searching eBay sold listings: {str(e)}", exc_info=True)
             return self._mock_sold_data(keywords)
 
     def _parse_sold_listings(self, api_response: Dict, keywords: str) -> Dict[str, Any]:
@@ -174,7 +194,7 @@ class eBayService:
                     })
 
                 except Exception as e:
-                    print(f"Error parsing item: {str(e)}")
+                    logger.debug(f"Error parsing item: {str(e)}")
                     continue
 
             if not prices:
@@ -228,7 +248,7 @@ class eBayService:
             }
 
         except Exception as e:
-            print(f"Error parsing sold listings: {str(e)}")
+            logger.error(f"Error parsing sold listings: {str(e)}", exc_info=True)
             return self._mock_sold_data(keywords)
 
     def _generate_market_insight(
@@ -289,7 +309,8 @@ class eBayService:
         return condition_map.get(condition.lower())
 
     def _mock_sold_data(self, keywords: str) -> Dict[str, Any]:
-        """Mock sold data for testing without API credentials"""
+        """Mock sold data when API is unavailable or not configured"""
+        logger.info(f"Returning mock data for keywords: {keywords}")
         return {
             'success': False,
             'message': 'eBay API not configured - Set EBAY_APP_ID to get real sold data',
@@ -329,7 +350,7 @@ class eBayService:
                 'scope': 'https://api.ebay.com/oauth/api_scope'
             }
 
-            response = requests.post(token_url, headers=headers, data=data)
+            response = requests.post(token_url, headers=headers, data=data, timeout=10)
             response.raise_for_status()
 
             token_data = response.json()
@@ -337,10 +358,14 @@ class eBayService:
             expires_in = token_data.get('expires_in', 7200)
             self.token_expiry = datetime.now() + timedelta(seconds=expires_in - 300)
 
+            logger.info("Successfully obtained eBay OAuth token")
             return self.oauth_token
 
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"eBay OAuth HTTP error {e.response.status_code}: {e.response.text}")
+            return None
         except Exception as e:
-            print(f"Error getting eBay OAuth token: {str(e)}")
+            logger.error(f"Error getting eBay OAuth token: {str(e)}", exc_info=True)
             return None
 
     async def post_item(self, item: Any) -> Dict[str, Any]:
