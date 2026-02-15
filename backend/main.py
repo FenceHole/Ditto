@@ -19,7 +19,11 @@ from services.marketplace_selector import MarketplaceSelector
 from services.listing_generator import ListingGenerator
 from services.facebook_poster import FacebookPoster
 from services.storage_manager import StorageManager
-from models.database import Database, ItemListing
+from models.database import create_database
+from utils.logger import setup_logger
+
+# Setup logging
+logger = setup_logger(__name__, level=os.getenv("LOG_LEVEL", "INFO"))
 
 app = FastAPI(
     title="Marketplace Bot Analyzer",
@@ -43,7 +47,9 @@ marketplace_selector = MarketplaceSelector()
 listing_generator = ListingGenerator()
 facebook_poster = FacebookPoster()
 storage_manager = StorageManager()
-db = Database()
+db = create_database()
+
+logger.info("All services initialized")
 
 
 class AnalyzeRequest(BaseModel):
@@ -62,8 +68,23 @@ class PostRequest(BaseModel):
 @app.on_event("startup")
 async def startup_event():
     """Initialize database and services on startup"""
-    await db.initialize()
-    print("✓ Marketplace Bot Analyzer API started successfully")
+    try:
+        await db.initialize()
+        logger.info("✓ Marketplace Bot Analyzer API started successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {str(e)}")
+        raise
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    try:
+        if hasattr(db, 'close'):
+            await db.close()
+        logger.info("Application shutdown complete")
+    except Exception as e:
+        logger.error(f"Error during shutdown: {str(e)}")
 
 
 @app.get("/")
@@ -96,9 +117,11 @@ async def upload_images(
     """
     try:
         if not files:
+            logger.warning("Upload attempt with no files")
             raise HTTPException(status_code=400, detail="No files uploaded")
 
         if len(files) > 10:
+            logger.warning(f"Upload attempt with {len(files)} files (max 10)")
             raise HTTPException(
                 status_code=400,
                 detail="Maximum 10 images allowed per upload"
@@ -108,6 +131,7 @@ async def upload_images(
         image_paths = []
         for file in files:
             if not file.content_type.startswith('image/'):
+                logger.warning(f"Invalid file type: {file.filename} ({file.content_type})")
                 raise HTTPException(
                     status_code=400,
                     detail=f"File {file.filename} is not an image"
@@ -116,21 +140,26 @@ async def upload_images(
             file_path = await storage_manager.save_upload(file)
             image_paths.append(file_path)
 
+        logger.info(f"Uploaded {len(image_paths)} images for analysis")
+
         # Analyze images to identify the item
-        print(f"Analyzing {len(image_paths)} images...")
+        logger.info(f"Analyzing {len(image_paths)} images...")
         analysis_result = await image_analyzer.analyze_images(
             image_paths,
             additional_context=additional_notes
         )
 
         if not analysis_result.get("identified"):
+            logger.warning("Failed to identify item from images")
             raise HTTPException(
                 status_code=422,
                 detail="Could not identify item from images"
             )
 
+        logger.info(f"Identified item: {analysis_result['item_name']}")
+
         # Estimate pricing
-        print(f"Estimating price for: {analysis_result['item_name']}")
+        logger.info(f"Estimating price for: {analysis_result['item_name']}")
         pricing_data = await price_estimator.estimate_price(
             item_name=analysis_result['item_name'],
             category=analysis_result['category'],
@@ -140,7 +169,7 @@ async def upload_images(
         )
 
         # Determine best marketplaces
-        print("Selecting optimal marketplaces...")
+        logger.info("Selecting optimal marketplaces...")
         marketplace_recommendations = await marketplace_selector.select_marketplaces(
             category=analysis_result['category'],
             estimated_price=pricing_data['recommended_price'],
@@ -149,7 +178,7 @@ async def upload_images(
         )
 
         # Generate listing copy
-        print("Generating listing copy...")
+        logger.info("Generating listing copy...")
         listing_copy = await listing_generator.generate_listing(
             item_name=analysis_result['item_name'],
             description=analysis_result['description'],
@@ -173,9 +202,11 @@ async def upload_images(
             analysis_metadata=analysis_result
         )
 
+        logger.info(f"Created listing with ID: {item_listing['id']}")
+
         return {
             "success": True,
-            "item_id": item_listing.id,
+            "item_id": item_listing['id'],
             "analysis": {
                 "item_name": analysis_result['item_name'],
                 "category": analysis_result['category'],
@@ -193,7 +224,7 @@ async def upload_images(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error in upload_images: {str(e)}")
+        logger.error(f"Error in upload_images: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -215,7 +246,10 @@ async def post_to_marketplaces(
         # Retrieve item from database
         item = await db.get_listing(request.item_id)
         if not item:
+            logger.warning(f"Item not found: {request.item_id}")
             raise HTTPException(status_code=404, detail="Item not found")
+
+        logger.info(f"Posting item {request.item_id} to: {request.marketplaces}")
 
         posting_results = {}
 
@@ -224,10 +258,12 @@ async def post_to_marketplaces(
             if marketplace.lower() == "facebook":
                 if request.auto_post:
                     # Post immediately
+                    logger.info(f"Auto-posting to Facebook for item {request.item_id}")
                     result = await facebook_poster.post_item(item)
                     posting_results["facebook"] = result
                 else:
                     # Return draft for review
+                    logger.info(f"Creating Facebook draft for item {request.item_id}")
                     posting_results["facebook"] = {
                         "status": "draft",
                         "preview": await facebook_poster.preview_listing(item)
@@ -246,6 +282,8 @@ async def post_to_marketplaces(
             posting_results=posting_results
         )
 
+        logger.info(f"Successfully processed posting for item {request.item_id}")
+
         return {
             "success": True,
             "item_id": request.item_id,
@@ -255,7 +293,7 @@ async def post_to_marketplaces(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error in post_to_marketplaces: {str(e)}")
+        logger.error(f"Error in post_to_marketplaces: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -290,7 +328,7 @@ async def get_listings(
         }
 
     except Exception as e:
-        print(f"Error in get_listings: {str(e)}")
+        logger.error(f"Error in get_listings: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -310,7 +348,7 @@ async def get_listing(item_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error in get_listing: {str(e)}")
+        logger.error(f"Error in get_listing: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -333,7 +371,7 @@ async def update_listing(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error in update_listing: {str(e)}")
+        logger.error(f"Error in update_listing: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -353,7 +391,7 @@ async def delete_listing(item_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error in delete_listing: {str(e)}")
+        logger.error(f"Error in delete_listing: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

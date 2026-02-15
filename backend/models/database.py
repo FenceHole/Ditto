@@ -1,6 +1,6 @@
 """
 Database Models and Management
-Simple JSON-based database for development (can be replaced with PostgreSQL/MongoDB)
+Supports JSON (development), PostgreSQL, and MongoDB
 """
 
 import json
@@ -9,6 +9,10 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 import uuid
 from pathlib import Path
+
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class ItemListing:
@@ -86,10 +90,10 @@ class Database:
                     }
                 print(f"Loaded {len(self.listings)} listings from database")
             except Exception as e:
-                print(f"Error loading database: {str(e)}")
+                logger.error(f"Error loading database: {str(e)}")
                 self.listings = {}
         else:
-            print("Initialized new database")
+            logger.info("Initialized new JSON database")
 
     async def save(self):
         """Save database to disk"""
@@ -103,7 +107,7 @@ class Database:
                 json.dump(data, f, indent=2)
 
         except Exception as e:
-            print(f"Error saving database: {str(e)}")
+            logger.error(f"Error saving database: {str(e)}")
 
     async def create_listing(self, **kwargs) -> ItemListing:
         """Create new listing"""
@@ -200,3 +204,41 @@ class Database:
                 results.append(listing.to_dict())
 
         return results
+
+
+def create_database(db_type: Optional[str] = None, database_url: Optional[str] = None):
+    """
+    Factory function to create database instance
+    
+    Args:
+        db_type: Type of database ('json', 'postgres', 'mongodb'). 
+                 If None, will be determined from DATABASE_URL or default to 'json'
+        database_url: Database connection URL
+    
+    Returns:
+        Database instance
+    """
+    # Auto-detect database type from URL if not specified
+    if db_type is None:
+        database_url = database_url or os.getenv("DATABASE_URL")
+        
+        if database_url:
+            if database_url.startswith("postgresql://") or database_url.startswith("postgres://"):
+                db_type = "postgres"
+            elif database_url.startswith("mongodb://") or database_url.startswith("mongodb+srv://"):
+                db_type = "mongodb"
+            else:
+                db_type = "json"
+        else:
+            db_type = os.getenv("DATABASE_TYPE", "json").lower()
+    
+    logger.info(f"Creating database instance: {db_type}")
+    
+    if db_type == "postgres":
+        from models.database_postgres import PostgresDatabase
+        return PostgresDatabase(database_url)
+    elif db_type == "mongodb":
+        from models.database_mongo import MongoDatabase
+        return MongoDatabase(database_url)
+    else:
+        return Database(database_url)
