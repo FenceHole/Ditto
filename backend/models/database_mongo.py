@@ -47,12 +47,13 @@ class MongoDatabase:
             await self.collection.create_index("id", unique=True)
             await self.collection.create_index("status")
             await self.collection.create_index("created_at")
+            # Create text index for search - single index is more efficient
             await self.collection.create_index([
                 ("item_name", "text"),
+                ("description", "text"),
                 ("category", "text"),
-                ("brand", "text"),
-                ("description", "text")
-            ])
+                ("brand", "text")
+            ], name="text_search_index")
             
             logger.info("MongoDB database initialized successfully")
         except Exception as e:

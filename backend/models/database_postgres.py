@@ -59,6 +59,7 @@ class PostgresDatabase:
         
         self.engine = None
         self.async_session = None
+        self.echo = os.getenv("DATABASE_ECHO", "false").lower() == "true"
         logger.info(f"PostgreSQL database configured: {self.database_url.split('@')[-1]}")
 
     async def initialize(self):
@@ -66,7 +67,7 @@ class PostgresDatabase:
         try:
             self.engine = create_async_engine(
                 self.database_url,
-                echo=False,
+                echo=self.echo,
                 pool_pre_ping=True,
                 pool_size=10,
                 max_overflow=20

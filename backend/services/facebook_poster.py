@@ -4,12 +4,32 @@ Handles posting to Facebook Marketplace via Graph API
 """
 
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 import requests
 
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+def item_to_dict_obj(item: Union[Dict, Any]) -> Any:
+    """
+    Convert dict to object-like access if needed
+    
+    Args:
+        item: Item as dict or object
+        
+    Returns:
+        Object with attribute access
+    """
+    if isinstance(item, dict):
+        class DictObj:
+            def __init__(self, d):
+                self.__dict__.update(d)
+            def get(self, key, default=None):
+                return self.__dict__.get(key, default)
+        return DictObj(item)
+    return item
 
 
 class FacebookPoster:
@@ -43,13 +63,7 @@ class FacebookPoster:
 
         try:
             # Convert item dict to object-like access if needed
-            if isinstance(item, dict):
-                class DictObj:
-                    def __init__(self, d):
-                        self.__dict__.update(d)
-                    def get(self, key, default=None):
-                        return self.__dict__.get(key, default)
-                item = DictObj(item)
+            item = item_to_dict_obj(item)
             
             # Upload photos first
             photo_ids = await self._upload_photos(item.image_paths)
@@ -133,13 +147,7 @@ class FacebookPoster:
             Preview data
         """
         # Convert dict to object-like access if needed
-        if isinstance(item, dict):
-            class DictObj:
-                def __init__(self, d):
-                    self.__dict__.update(d)
-                def get(self, key, default=None):
-                    return self.__dict__.get(key, default)
-            item = DictObj(item)
+        item = item_to_dict_obj(item)
         
         return {
             "title": item.listing_copy.get("title", item.item_name),
