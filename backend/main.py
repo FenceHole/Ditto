@@ -21,6 +21,7 @@ from services.facebook_poster import FacebookPoster
 from services.storage_manager import StorageManager
 from models.database import create_database
 from utils.logger import setup_logger
+from middleware import RequestLoggingMiddleware
 
 # Setup logging
 logger = setup_logger(__name__, level=os.getenv("LOG_LEVEL", "INFO"))
@@ -32,13 +33,23 @@ app = FastAPI(
 )
 
 # CORS middleware for frontend communication
+# In production, set ALLOWED_ORIGINS environment variable
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+if "*" in allowed_origins:
+    logger.warning("CORS is configured to allow all origins. Set ALLOWED_ORIGINS in production!")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure this in production
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add request logging middleware
+if os.getenv("ENABLE_REQUEST_LOGGING", "true").lower() == "true":
+    app.add_middleware(RequestLoggingMiddleware)
+    logger.info("Request logging middleware enabled")
 
 # Initialize services
 image_analyzer = ImageAnalyzer()
@@ -96,6 +107,38 @@ async def root():
         "version": "1.0.0",
         "timestamp": datetime.now().isoformat()
     }
+
+
+@app.get("/health")
+async def health_check():
+    """
+    Detailed health check endpoint
+    Returns service status and dependencies health
+    """
+    health_status = {
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "services": {}
+    }
+    
+    # Check database
+    try:
+        if hasattr(db, 'get_listings'):
+            await db.get_listings(limit=1)
+            health_status["services"]["database"] = "healthy"
+        else:
+            health_status["services"]["database"] = "unknown"
+    except Exception as e:
+        health_status["services"]["database"] = f"unhealthy: {str(e)}"
+        health_status["status"] = "degraded"
+    
+    # Check API keys
+    health_status["services"]["anthropic_api"] = "configured" if os.getenv("ANTHROPIC_API_KEY") else "not_configured"
+    health_status["services"]["ebay_api"] = "configured" if os.getenv("EBAY_APP_ID") else "not_configured"
+    health_status["services"]["facebook_api"] = "configured" if os.getenv("FACEBOOK_ACCESS_TOKEN") else "not_configured"
+    
+    status_code = 200 if health_status["status"] == "healthy" else 503
+    return JSONResponse(content=health_status, status_code=status_code)
 
 
 @app.post("/api/upload")
