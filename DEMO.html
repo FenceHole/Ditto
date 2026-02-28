@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketplace Bot Analyzer - DEMO</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .demo-banner {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // MOCK DATA for demo
+        const DEMO_RESULT = {
+            analysis: {
+                item_name: "Apple AirPods Pro (2nd Generation)",
+                category: "Electronics - Audio",
+                brand: "Apple",
+                description: "Premium wireless earbuds with active noise cancellation, transparency mode, and adaptive audio. Features H2 chip for enhanced performance, up to 6 hours of listening time, and MagSafe charging case.",
+                features: [
+                    "Active Noise Cancellation",
+                    "Transparency Mode",
+                    "Adaptive Audio",
+                    "Personalized Spatial Audio",
+                    "MagSafe Charging Case",
+                    "IPX4 Sweat & Water Resistant",
+                    "Up to 6 Hours Battery Life"
+                ],
+                condition: "good"
+            },
+            pricing: {
+                recommended_price: 185.00,
+                quick_sale_price: 165.00,
+                market_demand: "high",
+                turnover_estimate: "3-7 days (high activity)",
+                pricing_strategy: "Priced at median of real sold items. 23 recent sales in last 30 days. Strong market demand indicates quick sale potential.",
+                data_source: "eBay Sold Listings (Real Sales Data)",
+                ebay_sold_data: {
+                    success: true,
+                    sold_count: 47,
+                    recent_sales_count: 23,
+                    median_price: 185.00,
+                    average_price: 188.50,
+                    min_price: 155.00,
+                    max_price: 215.00,
+                    market_insight: "Very active market with strong demand. Prices trending UP recently. Consistent pricing across listings.",
+                    sold_listings: [
+                        {
+                            title: "Apple AirPods Pro 2nd Gen with MagSafe - Excellent Condition",
+                            total_price: 189.99,
+                            sold_date: "2024-02-15T10:30:00.000Z"
+                        },
+                        {
+                            title: "AirPods Pro 2 - Lightly Used, Perfect Working Order",
+                            total_price: 182.50,
+                            sold_date: "2024-02-14T15:20:00.000Z"
+                        },
+                        {
+                            title: "Apple AirPods Pro (2nd Generation) - Good Condition",
+                            total_price: 185.00,
+                            sold_date: "2024-02-12T09:15:00.000Z"
+                        }
+                    ]
+                }
+            },
+            marketplaces: [
+                {
+                    name: "Facebook Marketplace",
+                    score: 95,
+                    priority: "high",
+                    reasoning: "Excellent match for Electronics - Audio. Great for local pickup. Typical speed: Fast (1-7 days typical). 47 recent sales found on eBay - proven market!",
+                    fees: "Free for local sales",
+                    estimated_speed: "Fast (1-7 days typical)",
+                    audience: "Local community buyers"
+                },
+                {
+                    name: "eBay",
+                    score: 93,
+                    priority: "high",
+                    reasoning: "Excellent match for Electronics - Audio. Nationwide/global reach. Typical speed: Medium (3-14 days typical). 47 recent sales found on eBay - proven market!",
+                    fees: "~13% total fees",
+                    estimated_speed: "Medium (3-14 days typical)",
+                    audience: "Global buyers, collectors"
+                },
+                {
+                    name: "Mercari",
+                    score: 85,
+                    priority: "high",
+                    reasoning: "Excellent match for Electronics - Audio. Nationwide/global reach. Typical speed: Medium (2-10 days typical)",
+                    fees: "10% selling fee + shipping",
+                    estimated_speed: "Medium (2-10 days typical)",
+                    audience: "Young adults, bargain hunters"
+                },
+                {
+                    name: "OfferUp",
+                    score: 80,
+                    priority: "high",
+                    reasoning: "Good fit for Electronics - Audio. Great for local pickup. Typical speed: Fast (1-7 days typical)",
+                    fees: "Free for local, fees for shipping",
+                    estimated_speed: "Fast (1-7 days typical)",
+                    audience: "Local buyers with ratings system"
+                }
+            ],
+            listing: {
+                title: "Apple AirPods Pro 2nd Gen - Active Noise Cancellation, MagSafe Case",
+                facebook_copy: "🎧 Apple AirPods Pro (2nd Generation) - Excellent Audio Quality!\n\nExperience premium wireless audio with these Apple AirPods Pro featuring the latest H2 chip technology. Perfect for music lovers, commuters, and anyone who values crystal-clear sound quality.\n\n✨ Key Features:\n• Active Noise Cancellation - Block out the world\n• Transparency Mode - Stay aware of your surroundings\n• Adaptive Audio - Automatically adjusts to your environment\n• Personalized Spatial Audio with head tracking\n• MagSafe Charging Case included\n• IPX4 Water Resistant - Sweat and splash proof\n• Up to 6 hours listening time per charge\n• Up to 30 hours with charging case\n\n📦 Condition: Good - Well maintained, fully functional, normal wear from use. All features working perfectly.\n\n💰 Price: $185 (Firm - Priced based on recent sold listings)\n\n📍 Location: Local pickup available\n💳 Payment: Cash, Venmo, PayPal accepted\n\n⚡ Fast sale - These sell quickly! Message me today to secure yours.\n\n#AirPodsPro #Apple #WirelessEarbuds #NoiseCancelling #Electronics #AudioGear",
+                bullet_points: [
+                    "Authentic Apple AirPods Pro (2nd Generation)",
+                    "Active Noise Cancellation & Transparency Mode",
+                    "MagSafe Charging Case included",
+                    "IPX4 sweat and water resistant",
+                    "Up to 6 hours battery per charge",
+                    "Good condition - fully functional",
+                    "Priced to sell based on market data"
+                ]
+            }
+        };
+
+        function DemoApp() {
+            const [showResults, setShowResults] = useState(false);
+
+            return (
+                <div className="min-h-screen">
+                    {/* Demo Banner */}
+                    <div className="demo-banner">
+                        ⚠️ DEMO MODE - This is a preview with sample data. No API key needed for demo!
+                    </div>
+
+                    {/* Header */}
+                    <div className="gradient-bg text-white py-6 shadow-lg">
+                        <div className="container mx-auto px-4">
+                            <h1 className="text-3xl font-bold mb-2">🤖 Marketplace Bot Analyzer</h1>
+                            <p className="text-blue-100">AI-powered marketplace listing automation</p>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="container mx-auto px-4 py-8 max-w-6xl">
+                        {!showResults ? (
+                            <DemoUploadView onAnalyze={() => setShowResults(true)} />
+                        ) : (
+                            <ResultsView result={DEMO_RESULT} onReset={() => setShowResults(false)} />
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function DemoUploadView({ onAnalyze }) {
+            return (
+                <div>
+                    <div className="card">
+                        <h2 className="text-2xl font-bold mb-4">📸 Demo: Upload Item Photos</h2>
+                        <div className="bg-blue-50 border-2 border-blue-300 rounded-lg p-8 text-center mb-4">
+                            <div className="text-6xl mb-4">📸</div>
+                            <p className="text-lg font-semibold mb-2">DEMO MODE</p>
+                            <p className="text-gray-600 mb-4">This demo shows example results for Apple AirPods Pro</p>
+                            <p className="text-sm text-gray-500">In the real version, you'd upload your own photos here</p>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3 mb-4">
+                            <div className="bg-gray-200 rounded-lg p-4 text-center">
+                                <div className="text-4xl mb-2">🎧</div>
+                                <p className="text-xs text-gray-600">Photo 1</p>
+                            </div>
+                            <div className="bg-gray-200 rounded-lg p-4 text-center">
+                                <div className="text-4xl mb-2">📦</div>
+                                <p className="text-xs text-gray-600">Photo 2</p>
+                            </div>
+                            <div className="bg-gray-200 rounded-lg p-4 text-center">
+                                <div className="text-4xl mb-2">🔋</div>
+                                <p className="text-xs text-gray-600">Photo 3</p>
+                            </div>
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block font-semibold mb-2">Item Condition</label>
+                            <select className="w-full p-3 border rounded-lg bg-white">
+                                <option value="good" selected>Good</option>
+                                <option value="new">New</option>
+                                <option value="like-new">Like New</option>
+                                <option value="fair">Fair</option>
+                                <option value="poor">Poor</option>
+                            </select>
+                        </div>
+
+                        <button onClick={onAnalyze} className="btn-primary w-full">
+                            🚀 See Demo Results
+                        </button>
+                    </div>
+
+                    <div className="card bg-green-50 border-2 border-green-300">
+                        <h3 className="font-bold text-lg mb-2">✨ What This Bot Does:</h3>
+                        <ul className="space-y-2 text-gray-700">
+                            <li>✅ Identifies items from photos using AI</li>
+                            <li>✅ Searches eBay SOLD listings (real prices buyers paid!)</li>
+                            <li>✅ Recommends optimal price for quick sale</li>
+                            <li>✅ Suggests best marketplaces to list on</li>
+                            <li>✅ Writes compelling listing copy for you</li>
+                            <li>✅ Can auto-post to Facebook Marketplace</li>
+                        </ul>
+                    </div>
+                </div>
+            );
+        }
+
+        function ResultsView({ result, onReset }) {
+            return (
+                <div>
+                    {/* Analysis Results */}
+                    <div className="card">
+                        <h2 className="text-2xl font-bold mb-4">📊 AI Analysis Results</h2>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 className="font-bold text-lg mb-2">Item Identification</h3>
+                                <p className="text-2xl mb-2">{result.analysis.item_name}</p>
+                                <p className="text-gray-600 mb-2">{result.analysis.category}</p>
+                                <p className="text-gray-600 mb-3">Brand: {result.analysis.brand}</p>
+                                <p className="text-gray-700">{result.analysis.description}</p>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg mb-2">Key Features</h3>
+                                <ul className="list-disc pl-5 space-y-1">
+                                    {result.analysis.features.map((feature, i) => (
+                                        <li key={i} className="text-gray-700">{feature}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Pricing */}
+                    <div className="card">
+                        <h2 className="text-2xl font-bold mb-4">💰 Pricing Recommendations</h2>
+                        <div className="grid md:grid-cols-3 gap-4">
+                            <div className="bg-purple-50 p-4 rounded-lg">
+                                <p className="text-sm text-gray-600 mb-1">Recommended Price</p>
+                                <p className="text-3xl font-bold text-purple-700">${result.pricing.recommended_price}</p>
+                                <p className="text-sm text-gray-600 mt-2">Balanced pricing</p>
+                            </div>
+                            <div className="bg-green-50 p-4 rounded-lg">
+                                <p className="text-sm text-gray-600 mb-1">Quick Sale Price</p>
+                                <p className="text-3xl font-bold text-green-700">${result.pricing.quick_sale_price}</p>
+                                <p className="text-sm text-gray-600 mt-2">Fast turnaround</p>
+                            </div>
+                            <div className="bg-blue-50 p-4 rounded-lg">
+                                <p className="text-sm text-gray-600 mb-1">Market Demand</p>
+                                <p className="text-3xl font-bold text-blue-700 capitalize">{result.pricing.market_demand}</p>
+                                <p className="text-sm text-gray-600 mt-2">{result.pricing.turnover_estimate}</p>
+                            </div>
+                        </div>
+
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                            <p className="text-sm font-semibold mb-2">Pricing Strategy</p>
+                            <p className="text-gray-700">{result.pricing.pricing_strategy}</p>
+                        </div>
+
+                        {/* eBay Sold Data */}
+                        <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                                <span>📊 eBay Sold Data (Real Sales)</span>
+                                <span className="badge badge-success text-xs">VERIFIED</span>
+                            </h3>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                                <div>
+                                    <p className="text-xs text-gray-600">Total Sold</p>
+                                    <p className="text-xl font-bold text-blue-700">{result.pricing.ebay_sold_data.sold_count}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-600">Median Price</p>
+                                    <p className="text-xl font-bold text-blue-700">${result.pricing.ebay_sold_data.median_price}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-600">Price Range</p>
+                                    <p className="text-sm font-semibold text-blue-700">
+                                        ${result.pricing.ebay_sold_data.min_price} - ${result.pricing.ebay_sold_data.max_price}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-600">Recent Sales</p>
+                                    <p className="text-xl font-bold text-blue-700">{result.pricing.ebay_sold_data.recent_sales_count}</p>
+                                    <p className="text-xs text-gray-500">Last 30 days</p>
+                                </div>
+                            </div>
+
+                            <p className="text-sm text-gray-700 mb-2">
+                                <strong>Market Insight:</strong> {result.pricing.ebay_sold_data.market_insight}
+                            </p>
+
+                            <div className="mt-3">
+                                <p className="text-xs font-semibold text-gray-600 mb-2">Recent Actual Sales:</p>
+                                <div className="space-y-1">
+                                    {result.pricing.ebay_sold_data.sold_listings.map((listing, i) => (
+                                        <div key={i} className="text-xs bg-white p-2 rounded flex justify-between">
+                                            <span className="text-gray-700 truncate flex-1">{listing.title}</span>
+                                            <span className="font-bold text-green-600 ml-2">${listing.total_price.toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-3 text-xs text-gray-500 text-center">
+                            Data Source: {result.pricing.data_source}
+                        </div>
+                    </div>
+
+                    {/* Marketplaces */}
+                    <div className="card">
+                        <h2 className="text-2xl font-bold mb-4">🎯 Recommended Marketplaces</h2>
+                        <div className="space-y-4">
+                            {result.marketplaces.map((marketplace, i) => (
+                                <div key={i} className="border rounded-lg p-4 hover:bg-gray-50">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 className="font-bold text-lg">{marketplace.name}</h3>
+                                            <span className={`badge badge-${marketplace.priority === 'high' ? 'success' : 'warning'}`}>
+                                                {marketplace.priority.toUpperCase()} PRIORITY
+                                            </span>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-2xl font-bold text-purple-600">{marketplace.score}</p>
+                                            <p className="text-xs text-gray-500">Match Score</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-gray-700 mb-2">{marketplace.reasoning}</p>
+                                    <div className="text-sm text-gray-600 space-y-1">
+                                        <p>💵 {marketplace.fees}</p>
+                                        <p>⚡ {marketplace.estimated_speed}</p>
+                                        <p>👥 {marketplace.audience}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Listing Copy */}
+                    <div className="card">
+                        <h2 className="text-2xl font-bold mb-4">✍️ Generated Listing Copy</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="font-semibold block mb-2">Title</label>
+                                <input type="text" value={result.listing.title} readOnly className="w-full p-3 border rounded-lg bg-gray-50" />
+                            </div>
+                            <div>
+                                <label className="font-semibold block mb-2">Facebook Marketplace Copy</label>
+                                <textarea value={result.listing.facebook_copy} readOnly className="w-full p-3 border rounded-lg bg-gray-50 h-64" />
+                            </div>
+                            <div>
+                                <label className="font-semibold block mb-2">Key Points</label>
+                                <ul className="list-disc pl-5 space-y-1">
+                                    {result.listing.bullet_points.map((point, i) => (
+                                        <li key={i} className="text-gray-700">{point}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex gap-3">
+                            <button className="btn-primary flex-1">
+                                📤 Post to Facebook Marketplace
+                            </button>
+                            <button onClick={onReset} className="btn-secondary">
+                                🔄 Try Another Item
+                            </button>
+                        </div>
+
+                        <div className="mt-4 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg text-center">
+                            <p className="font-semibold text-yellow-800">
+                                💡 This is demo data. The real version will analyze YOUR photos and generate custom listings!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<DemoApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
