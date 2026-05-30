@@ -274,7 +274,7 @@ class eBayService:
         try:
             # eBay format: 2024-01-15T14:30:00.000Z
             return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-        except:
+        except (ValueError, AttributeError, TypeError):
             return datetime.now()
 
     def _map_condition_to_ebay(self, condition: str) -> Optional[str]:

@@ -381,7 +381,7 @@ Provide realistic, data-driven pricing that balances quick turnover with fair va
             # Remove currency symbols and commas
             clean_price = price_str.replace('$', '').replace(',', '').strip()
             return float(clean_price)
-        except:
+        except (ValueError, AttributeError, TypeError):
             return 0.0
 
     def _mock_pricing(self, item_name: str, condition: str) -> Dict[str, Any]:

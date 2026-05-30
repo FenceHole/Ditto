@@ -62,8 +62,12 @@ class PostRequest(BaseModel):
 @app.on_event("startup")
 async def startup_event():
     """Initialize database and services on startup"""
-    await db.initialize()
-    print("✓ Marketplace Bot Analyzer API started successfully")
+    try:
+        await db.initialize()
+        print("✓ Marketplace Bot Analyzer API started successfully")
+    except Exception as e:
+        print(f"⚠️ Warning: Database initialization failed: {str(e)}")
+        print("⚠️ App will continue but data persistence may not work")
 
 
 @app.get("/")

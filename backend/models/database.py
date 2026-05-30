@@ -78,12 +78,19 @@ class Database:
         # Load existing data if available
         if os.path.exists(self.db_path):
             try:
-                with open(self.db_path, 'r') as f:
-                    data = json.load(f)
-                    self.listings = {
-                        k: ItemListing.from_dict(v)
-                        for k, v in data.items()
-                    }
+                # Run file I/O in thread pool to avoid blocking
+                import asyncio
+                loop = asyncio.get_event_loop()
+
+                def load_db():
+                    with open(self.db_path, 'r') as f:
+                        return json.load(f)
+
+                data = await loop.run_in_executor(None, load_db)
+                self.listings = {
+                    k: ItemListing.from_dict(v)
+                    for k, v in data.items()
+                }
                 print(f"Loaded {len(self.listings)} listings from database")
             except Exception as e:
                 print(f"Error loading database: {str(e)}")
@@ -99,8 +106,15 @@ class Database:
                 for k, v in self.listings.items()
             }
 
-            with open(self.db_path, 'w') as f:
-                json.dump(data, f, indent=2)
+            # Run file I/O in thread pool to avoid blocking
+            import asyncio
+            loop = asyncio.get_event_loop()
+
+            def save_db():
+                with open(self.db_path, 'w') as f:
+                    json.dump(data, f, indent=2)
+
+            await loop.run_in_executor(None, save_db)
 
         except Exception as e:
             print(f"Error saving database: {str(e)}")

@@ -49,8 +49,15 @@ class StorageManager:
         # Save file
         file_path = os.path.join(full_dir, unique_filename)
 
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        # Run file I/O in thread pool to avoid blocking
+        import asyncio
+        loop = asyncio.get_event_loop()
+
+        def save_file():
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+
+        await loop.run_in_executor(None, save_file)
 
         return file_path
 
