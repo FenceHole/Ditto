@@ -1,23 +1,23 @@
 """
 Image Analyzer Service
-Uses Claude Vision API to identify items from photos
+Uses Google Gemini Vision API to identify items from photos (FREE!)
 """
 
-import anthropic
 import base64
 import os
 from typing import List, Dict, Any, Optional
 import json
+import requests
 
 
 class ImageAnalyzer:
-    """Analyzes item images using Claude Vision API"""
+    """Analyzes item images using Google Gemini Vision API (FREE)"""
 
     def __init__(self):
-        self.api_key = os.getenv("ANTHROPIC_API_KEY")
+        self.api_key = os.getenv("GEMINI_API_KEY")
         if not self.api_key:
-            print("WARNING: ANTHROPIC_API_KEY not set. Image analysis will fail.")
-        self.client = anthropic.Anthropic(api_key=self.api_key) if self.api_key else None
+            print("WARNING: GEMINI_API_KEY not set. Image analysis will use mock data.")
+        self.api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
     async def analyze_images(
         self,
@@ -25,7 +25,7 @@ class ImageAnalyzer:
         additional_context: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Analyze images to identify item, condition, and features
+        Analyze images to identify item, condition, and features using Gemini Vision (FREE)
 
         Args:
             image_paths: List of paths to image files
@@ -34,59 +34,65 @@ class ImageAnalyzer:
         Returns:
             Dictionary containing item identification and analysis
         """
-        if not self.client:
+        if not self.api_key:
             # Fallback for testing without API key
             return self._mock_analysis(image_paths)
 
         try:
-            # Prepare image content for Claude
-            image_content = []
-            for img_path in image_paths[:5]:  # Limit to 5 images
+            # Prepare images for Gemini
+            parts = []
+
+            # Add the text prompt first
+            prompt = self._build_analysis_prompt(additional_context)
+            parts.append({"text": prompt})
+
+            # Add images (limit to 5)
+            for img_path in image_paths[:5]:
                 with open(img_path, "rb") as img_file:
                     image_data = base64.standard_b64encode(img_file.read()).decode("utf-8")
 
                     # Detect image type
                     ext = img_path.lower().split('.')[-1]
-                    media_type_map = {
+                    mime_type_map = {
                         'jpg': 'image/jpeg',
                         'jpeg': 'image/jpeg',
                         'png': 'image/png',
                         'gif': 'image/gif',
                         'webp': 'image/webp'
                     }
-                    media_type = media_type_map.get(ext, 'image/jpeg')
+                    mime_type = mime_type_map.get(ext, 'image/jpeg')
 
-                    image_content.append({
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": media_type,
-                            "data": image_data,
-                        },
+                    parts.append({
+                        "inline_data": {
+                            "mime_type": mime_type,
+                            "data": image_data
+                        }
                     })
 
-            # Build analysis prompt
-            prompt = self._build_analysis_prompt(additional_context)
+            # Call Gemini API
+            payload = {
+                "contents": [{
+                    "parts": parts
+                }],
+                "generationConfig": {
+                    "temperature": 0.4,
+                    "maxOutputTokens": 2048,
+                }
+            }
 
-            # Call Claude Vision API
-            message = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=2048,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": image_content + [
-                            {
-                                "type": "text",
-                                "text": prompt
-                            }
-                        ]
-                    }
-                ]
+            response = requests.post(
+                f"{self.api_url}?key={self.api_key}",
+                headers={"Content-Type": "application/json"},
+                json=payload
             )
 
-            # Parse Claude's response
-            response_text = message.content[0].text
+            if response.status_code != 200:
+                raise Exception(f"Gemini API error: {response.text}")
+
+            result = response.json()
+
+            # Extract text from Gemini response
+            response_text = result['candidates'][0]['content']['parts'][0]['text']
 
             # Extract JSON from response
             analysis = self._parse_analysis_response(response_text)

@@ -1,22 +1,22 @@
 """
 Price Estimator Service
 Estimates optimal pricing based on market research and item attributes
-Uses eBay SOLD listings for real market data
+Uses eBay SOLD listings for real market data + Gemini AI (FREE!)
 """
 
-import anthropic
 import os
 from typing import Dict, Any, Optional
 import json
+import requests
 from .ebay_service import eBayService
 
 
 class PriceEstimator:
-    """Estimates item pricing using eBay sold data and AI analysis"""
+    """Estimates item pricing using eBay sold data and Gemini AI (FREE)"""
 
     def __init__(self):
-        self.api_key = os.getenv("ANTHROPIC_API_KEY")
-        self.client = anthropic.Anthropic(api_key=self.api_key) if self.api_key else None
+        self.api_key = os.getenv("GEMINI_API_KEY")
+        self.api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
         self.ebay_service = eBayService()
 
     async def estimate_price(
@@ -50,14 +50,14 @@ class PriceEstimator:
             )
 
             # Step 2: Use AI to analyze and refine pricing with context
-            if self.client and ebay_data.get('success'):
+            if self.api_key and ebay_data.get('success'):
                 pricing_data = await self._estimate_with_sold_data(
                     item_name, category, condition, brand, attributes, ebay_data
                 )
             elif ebay_data.get('success'):
                 # Have eBay data but no AI - use statistical analysis
                 pricing_data = self._calculate_pricing_from_ebay(ebay_data, condition)
-            elif self.client:
+            elif self.api_key:
                 # No eBay data but have AI - use AI estimates
                 pricing_data = await self._estimate_without_ebay(
                     item_name, category, condition, brand, attributes
@@ -85,18 +85,34 @@ class PriceEstimator:
         attributes: Optional[Dict[str, Any]],
         ebay_data: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Use AI to analyze eBay sold data and provide intelligent pricing"""
+        """Use Gemini AI to analyze eBay sold data and provide intelligent pricing (FREE)"""
         prompt = self._build_pricing_prompt_with_ebay(
             item_name, category, condition, brand, attributes, ebay_data
         )
 
-        message = self.client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1524,
-            messages=[{"role": "user", "content": prompt}]
+        # Call Gemini API
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }],
+            "generationConfig": {
+                "temperature": 0.4,
+                "maxOutputTokens": 1524,
+            }
+        }
+
+        response = requests.post(
+            f"{self.api_url}?key={self.api_key}",
+            headers={"Content-Type": "application/json"},
+            json=payload
         )
 
-        response_text = message.content[0].text
+        if response.status_code == 200:
+            result = response.json()
+            response_text = result['candidates'][0]['content']['parts'][0]['text']
+        else:
+            response_text = ""
+
         pricing_data = self._parse_pricing_response(response_text)
 
         # Ensure we include eBay comparables
@@ -121,18 +137,34 @@ class PriceEstimator:
         brand: Optional[str],
         attributes: Optional[Dict[str, Any]]
     ) -> Dict[str, Any]:
-        """Fallback to AI-only pricing when eBay data unavailable"""
+        """Fallback to Gemini AI-only pricing when eBay data unavailable (FREE)"""
         prompt = self._build_pricing_prompt(
             item_name, category, condition, brand, attributes
         )
 
-        message = self.client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=1524,
-            messages=[{"role": "user", "content": prompt}]
+        # Call Gemini API
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }],
+            "generationConfig": {
+                "temperature": 0.4,
+                "maxOutputTokens": 1524,
+            }
+        }
+
+        response = requests.post(
+            f"{self.api_url}?key={self.api_key}",
+            headers={"Content-Type": "application/json"},
+            json=payload
         )
 
-        response_text = message.content[0].text
+        if response.status_code == 200:
+            result = response.json()
+            response_text = result['candidates'][0]['content']['parts'][0]['text']
+        else:
+            response_text = ""
+
         return self._parse_pricing_response(response_text)
 
     def _calculate_pricing_from_ebay(

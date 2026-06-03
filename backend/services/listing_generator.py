@@ -1,19 +1,19 @@
 """
 Listing Generator Service
-Creates compelling marketplace listing copy
+Creates compelling marketplace listing copy using Gemini (FREE!)
 """
 
-import anthropic
 import os
 from typing import List, Dict, Any, Optional
+import requests
 
 
 class ListingGenerator:
-    """Generates optimized listing copy for marketplaces"""
+    """Generates optimized listing copy for marketplaces using Gemini (FREE)"""
 
     def __init__(self):
-        self.api_key = os.getenv("ANTHROPIC_API_KEY")
-        self.client = anthropic.Anthropic(api_key=self.api_key) if self.api_key else None
+        self.api_key = os.getenv("GEMINI_API_KEY")
+        self.api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
     async def generate_listing(
         self,
@@ -25,7 +25,7 @@ class ListingGenerator:
         additional_notes: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Generate compelling listing copy
+        Generate compelling listing copy using Gemini (FREE)
 
         Args:
             item_name: Item name
@@ -38,7 +38,7 @@ class ListingGenerator:
         Returns:
             Dictionary with listing copy for different platforms
         """
-        if not self.client:
+        if not self.api_key:
             return self._mock_listing(item_name, description, condition, price)
 
         try:
@@ -46,18 +46,28 @@ class ListingGenerator:
                 item_name, description, condition, price, features, additional_notes
             )
 
-            message = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=2048,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
+            # Call Gemini API
+            payload = {
+                "contents": [{
+                    "parts": [{"text": prompt}]
+                }],
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "maxOutputTokens": 2048,
+                }
+            }
+
+            response = requests.post(
+                f"{self.api_url}?key={self.api_key}",
+                headers={"Content-Type": "application/json"},
+                json=payload
             )
 
-            response_text = message.content[0].text
+            if response.status_code != 200:
+                raise Exception(f"Gemini API error: {response.text}")
+
+            result = response.json()
+            response_text = result['candidates'][0]['content']['parts'][0]['text']
 
             # Parse the listing copy
             listing_data = self._parse_listing_response(response_text)
