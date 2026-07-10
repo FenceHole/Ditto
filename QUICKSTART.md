@@ -1,102 +1,58 @@
-# ⚡ QUICKSTART - Get Running in 5 Minutes
+# ⚡ Quickstart
 
-**Don't have time to read documentation? Follow these steps:**
+**What this does:** You give it photos of something you want to sell. It figures out what
+the item is, sets a smart price, and writes the whole Facebook Marketplace listing for you.
+You paste that into Facebook and hit post.
 
-## 🎯 What This Does
-
-Upload photos → AI analyzes item → AI writes listing → Auto-posts to Facebook Marketplace
-
-**That's it. You're done selling.**
+**What it costs:** $0. It uses Google's **free** Gemini AI.
 
 ---
 
-## ✅ Step 1: Get API Keys (5 min)
+## Step 1 — Get your free Gemini key (2 minutes)
 
-### Anthropic API ($5-20/month):
-1. Go to: **https://console.anthropic.com**
-2. Sign up
-3. Click "Get API Keys" → Create key
-4. **Copy the key** (starts with `sk-ant-api03-...`)
-5. Add $20 credits (Billing → Add Credits)
+1. Go to: **https://aistudio.google.com/app/apikey**
+2. Sign in with your Google account
+3. Click **Create API key**
+4. **Copy** the key it shows you
 
-### Facebook API (FREE):
-**Simple version (if you have a Facebook Page):**
-1. Go to: **https://developers.facebook.com/tools/explorer**
-2. Select your Page
-3. Click "Generate Access Token"
-4. Select permissions: `pages_manage_posts`, `catalog_management`
-5. **Copy the token**
-6. Get Page ID: Go to your Page → About → Page ID
+No credit card. No charge.
 
-**Don't have a Page?** See [SETUP.md](SETUP.md) for detailed instructions.
+## Step 2 — Put the key in the settings file (1 minute)
 
----
-
-## ✅ Step 2: Configure
-
-1. Open `Ditto/backend/.env.simple`
-2. Rename it to `.env`
-3. Fill in your keys:
+1. Open the `backend` folder
+2. Find the file **`.env.simple`** and rename it to **`.env`**
+3. Open `.env` and paste your key after `GEMINI_API_KEY=`
    ```
-   ANTHROPIC_API_KEY=sk-ant-api03-YOUR-KEY-HERE
-   FACEBOOK_ACCESS_TOKEN=YOUR-TOKEN-HERE
-   FACEBOOK_PAGE_ID=123456789
+   GEMINI_API_KEY=paste_your_key_here
    ```
 4. Save
 
----
+## Step 3 — Start it
 
-## ✅ Step 3: Run It
+- **Windows:** double-click **`START.bat`**
+- **Mac:** open `START.sh`
 
-### Windows:
-Double-click `START.bat`
+Wait until it says **"started successfully."**
 
-### Mac/Linux:
-```bash
-./START.sh
-```
+## Step 4 — Use it
 
-### Or manually:
-```bash
-cd backend
-pip install -r requirements.txt
-python main.py
-```
+Open your browser to **http://localhost:8000/docs** (or open
+`frontend/marketplace-app.html`), upload photos, and it gives you a finished listing with a
+**Copy** button. Paste that into Facebook Marketplace → *Create new listing → Item for sale*.
 
 ---
 
-## ✅ Step 4: Use It
+## About posting to Facebook — please read
 
-1. Open **http://localhost:8000** in your browser
-   - OR open `frontend/marketplace-app.html`
-2. Upload photos of your item
-3. Click "Analyze"
-4. Click "Post to Facebook Marketplace"
-5. **DONE!**
+There is **no safe way to make an app auto-post** to Facebook Marketplace — Facebook blocks
+it. So this app does the hard part (finding the item, pricing, writing the listing) and you
+do the easy 10-second part (paste + post).
 
----
+If you *really* want hands-off posting, there's an **optional** browser robot you can turn on
+for a **throwaway/dedicated** Facebook account only — never your main one, because it can get
+an account banned. See **SETUP.md**.
 
-## ❌ Problems?
+## Hooking it into your own automation (nessie)
 
-### "Can't find module"
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-### "API key not set"
-- Check `.env` file is in `backend/` folder
-- Make sure no spaces around `=` signs
-- Restart the server
-
-### "Facebook posting failed"
-- Token might be expired (get a new one)
-- Check Page ID is correct
-- Make sure you granted permissions
-
----
-
-## 💡 That's It!
-
-**See [SETUP.md](SETUP.md) for detailed guide**
-**See [README.md](README.md) for full documentation**
+See **INTEGRATION.md** — it's one endpoint (`/api/analyze`): send photos, get back a finished
+listing. Your nessie/openclaw/Hermes setup can call it and handle posting however it does.

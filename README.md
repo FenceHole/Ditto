@@ -1,65 +1,54 @@
 # 🤖 Marketplace Bot Analyzer
 
-An AI-powered marketplace listing automation tool that analyzes photos of items you want to sell, determines optimal pricing, recommends the best platforms, generates compelling listing copy, and automates posting to Facebook Marketplace and other platforms.
+Give it photos of something you want to sell. It identifies the item, sets a smart price,
+and writes the complete Facebook Marketplace listing. You paste the finished listing into
+Facebook and post. Built to plug into your own automation (see `INTEGRATION.md`).
 
-## 🎯 Why This Bot is Different
-
-**Real Market Data, Not Guesses:** Most pricing tools scrape current listings (seller asking prices). This bot uses **eBay SOLD listings** - actual completed sales showing what buyers really paid. This gives you accurate, data-driven pricing instead of hopeful guesses.
-
-**All-in-One Automation:** Upload photos → Get identification, pricing, platform recommendations, and ready-to-post listings. Everything automated in one workflow.
+> **Honest note on posting:** Facebook has **no public API** for posting personal Marketplace
+> listings, so nothing can truly "auto-post" to your Marketplace safely. This app does the hard
+> part (identify → price → write the listing) and hands you a **paste-ready** block. An optional,
+> opt-in browser robot exists for a **dedicated throwaway account only** (see `SETUP.md`) — it's
+> against Facebook's ToS and can get an account banned, so never use your main account.
 
 ## Features
 
-✨ **AI Image Analysis**
-- Upload photos and let Claude Vision API identify your items
-- Automatic brand, model, and condition detection
+✨ **AI Image Analysis** (free — Google Gemini)
+- Upload photos and let Gemini Vision identify your items
+- Brand, model, and condition detection
 - Feature extraction and detailed descriptions
 
-💰 **Smart Pricing with Real eBay Sold Data**
-- Uses **actual eBay SOLD listings** (completed sales, not asking prices!)
-- Real market data from what buyers actually paid
-- Statistical analysis of 50+ recent sold items
-- Median, average, and percentile-based recommendations
-- Condition-adjusted pricing
-- Quick-sale vs. optimal price strategies
-- Market demand estimation and turnover forecasting
+💰 **Smart Pricing**
+- Condition-adjusted price plus a quick-sale price for fast turnover
+- Optional eBay **sold-listings** research (off by default) for real "what buyers paid" data
 
-🎯 **Marketplace Selection**
-- Intelligent platform recommendations
-- Match score based on item category and price
-- Multi-platform support (Facebook, eBay, Mercari, etc.)
+✍️ **Finished, Paste-Ready Listings**
+- Title, price, and a compelling description
+- One `ready_to_post` block to paste straight into Marketplace
 
-✍️ **Auto-Generated Listings**
-- Compelling, SEO-optimized listing copy
-- Platform-specific formatting
-- Attention-grabbing titles and descriptions
-
-📤 **Automated Posting**
-- Direct posting to Facebook Marketplace
-- Draft mode for review before posting
-- Listing management and tracking
+🔌 **Automation-Friendly**
+- One clean endpoint (`POST /api/analyze`) your nessie/openclaw/Hermes setup can call
 
 ## Technology Stack
 
 **Backend:**
 - Python 3.9+
 - FastAPI (REST API)
-- Anthropic Claude API (Vision & Text)
+- Google Gemini API (free — Vision & Text)
 - JSON-based database (upgradeable to PostgreSQL/MongoDB)
 
 **Frontend:**
-- React 18
-- Tailwind CSS
-- Modern responsive design
+- React 18 + Tailwind CSS (single-file `frontend/marketplace-app.html`)
 
 ## Quick Start
 
 ### Prerequisites
 
 1. **Python 3.9 or higher**
-2. **Anthropic API Key** (required) - Get one at [console.anthropic.com](https://console.anthropic.com)
-3. **eBay Developer Account** (highly recommended for accurate pricing) - Sign up at [developer.ebay.com](https://developer.ebay.com)
-4. **Facebook Access Token** (optional, for automated posting)
+2. **Free Google Gemini API key** (required) — get one at [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
+3. **eBay Developer Account** (optional, for sold-price research) — [developer.ebay.com](https://developer.ebay.com)
+4. **A dedicated Facebook account** (optional, only if you enable the browser poster)
+
+See **QUICKSTART.md** for the simplest path, or **INTEGRATION.md** to wire it into nessie.
 
 ### Installation
 
@@ -187,14 +176,14 @@ Delete listing
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ANTHROPIC_API_KEY` | **Yes** | Your Anthropic API key for AI features |
-| `EBAY_APP_ID` | **Recommended** | eBay Application ID (Client ID) for sold listings data |
-| `EBAY_CERT_ID` | **Recommended** | eBay Certificate ID (Client Secret) |
-| `EBAY_DEV_ID` | **Recommended** | eBay Developer ID |
-| `EBAY_AUTH_TOKEN` | No | eBay User Auth Token (for posting, not needed for pricing) |
-| `EBAY_SANDBOX` | No | Set to 'true' for testing (default: false) |
-| `FACEBOOK_ACCESS_TOKEN` | No | Facebook token for automated posting |
-| `FACEBOOK_PAGE_ID` | No | Your Facebook Page ID |
+| `GEMINI_API_KEY` | **Yes** | Your free Google Gemini API key (powers analysis + listing writing) |
+| `APP_API_KEY` | No | If set, callers must send `X-API-Key` header (for nessie/automation) |
+| `EBAY_APP_ID` | No | eBay Application ID (Client ID) for optional sold-listings pricing |
+| `EBAY_CERT_ID` | No | eBay Certificate ID (Client Secret) |
+| `EBAY_DEV_ID` | No | eBay Developer ID |
+| `ENABLE_BROWSER_POSTER` | No | `true` to enable the optional browser poster (dedicated account only) |
+| `FB_DEDICATED_EMAIL` | No | Dedicated (throwaway) Facebook account email for the browser poster |
+| `FB_DEDICATED_PASSWORD` | No | Dedicated account password for the browser poster |
 | `HOST` | No | Server host (default: 0.0.0.0) |
 | `PORT` | No | Server port (default: 8000) |
 | `UPLOAD_DIR` | No | Upload directory path |
@@ -221,42 +210,43 @@ Delete listing
 
 **Note:** You only need the Finding API access (which is free) for pricing research. You don't need special permissions or user tokens unless you want to post to eBay (not currently supported).
 
-### Getting a Facebook Access Token
+### Posting to Facebook
 
-1. Create a Facebook App at [developers.facebook.com](https://developers.facebook.com)
-2. Add the Marketplace API permissions
-3. Generate a Page Access Token
-4. Add the token to your `.env` file
+There is no Facebook access token that posts to personal Marketplace — Facebook doesn't
+offer one. Post by pasting the `ready_to_post` block, or enable the optional browser poster
+for a dedicated account (see **SETUP.md**).
 
 ## Project Structure
 
 ```
 Ditto/
 ├── backend/
-│   ├── main.py                 # FastAPI application
+│   ├── main.py                 # FastAPI app (/api/analyze, /api/post, listings)
 │   ├── requirements.txt        # Python dependencies
 │   ├── .env.example           # Environment template
 │   ├── models/
 │   │   └── database.py        # Data models
 │   ├── services/
-│   │   ├── image_analyzer.py      # Claude Vision integration
-│   │   ├── ebay_service.py        # eBay sold listings search
-│   │   ├── price_estimator.py     # Pricing engine with eBay data
-│   │   ├── marketplace_selector.py # Platform recommendations
-│   │   ├── listing_generator.py   # Copy generation
-│   │   ├── facebook_poster.py     # Facebook API integration
+│   │   ├── image_analyzer.py      # Gemini Vision item identification
+│   │   ├── ebay_service.py        # Optional eBay sold-listings search
+│   │   ├── price_estimator.py     # Pricing engine (Gemini + optional eBay)
+│   │   ├── marketplace_selector.py # Platform ranking
+│   │   ├── listing_generator.py   # Gemini listing copy
+│   │   ├── facebook_poster.py     # Paste-ready formatter (no fake API calls)
+│   │   ├── playwright_poster.py   # Optional browser poster (dedicated acct, opt-in)
 │   │   └── storage_manager.py     # File storage
 │   ├── data/                  # JSON database (auto-created)
 │   └── storage/               # Uploaded images (auto-created)
 ├── frontend/
 │   └── marketplace-app.html   # React web interface
+├── INTEGRATION.md             # How nessie/automation calls the service
 └── README.md
 ```
 
 ## Features in Detail
 
 ### Image Analysis
-Uses Claude's Vision API to:
+Uses Google Gemini Vision to:
 - Identify products from photos
 - Detect brands and models
 - Extract key features
@@ -335,19 +325,20 @@ DATABASE_URL=postgresql://user:password@localhost/marketplace_bot
 
 ## Troubleshooting
 
-### "ANTHROPIC_API_KEY not set"
-- Copy `.env.example` to `.env`
-- Add your Anthropic API key
+### "GEMINI_API_KEY not set" (results look like mock/sample data)
+- Rename `backend/.env.simple` to `backend/.env`
+- Add your free key: `GEMINI_API_KEY=...` (from https://aistudio.google.com/app/apikey)
+- Restart the server
 
 ### "Failed to analyze items"
 - Ensure backend is running on port 8000
 - Check browser console for CORS errors
-- Verify API key is valid
+- Verify your Gemini key is valid
 
-### "Facebook posting failed"
-- Ensure you have a valid Facebook Access Token
-- Check token permissions include Marketplace API
-- Verify your Page ID is correct
+### "Nothing auto-posts to Facebook"
+- Expected — Facebook has no API for personal Marketplace posting.
+- Paste the `ready_to_post` block into Marketplace, or enable the optional browser
+  poster for a dedicated account (see SETUP.md).
 
 ### Images not uploading
 - Check file size (10MB limit per file)
@@ -388,7 +379,7 @@ For issues, questions, or suggestions:
 
 ## Acknowledgments
 
-- Built with [Claude](https://www.anthropic.com/claude) by Anthropic
+- AI by [Google Gemini](https://ai.google.dev/) (free tier)
 - Powered by [FastAPI](https://fastapi.tiangolo.com/)
 - UI built with [React](https://react.dev/) and [Tailwind CSS](https://tailwindcss.com/)
 

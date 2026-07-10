@@ -13,13 +13,12 @@ if not exist "backend\.env" (
     echo Creating .env from template...
     copy "backend\.env.simple" "backend\.env"
     echo.
-    echo [!] IMPORTANT: Edit backend\.env and add your API keys!
+    echo [!] IMPORTANT: Edit backend\.env and add your FREE Gemini key!
     echo.
-    echo     1. Get Anthropic API key from: https://console.anthropic.com
-    echo     2. Get Facebook tokens from: https://developers.facebook.com
-    echo     3. Open backend\.env in Notepad
-    echo     4. Fill in your API keys
-    echo     5. Save and run this script again
+    echo     1. Get a FREE Gemini key from: https://aistudio.google.com/app/apikey
+    echo     2. Open backend\.env in Notepad
+    echo     3. Paste it after GEMINI_API_KEY=
+    echo     4. Save and run this script again
     echo.
     pause
     exit /b 1

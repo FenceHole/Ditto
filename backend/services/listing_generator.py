@@ -174,7 +174,7 @@ Write copy that sells while being truthful and helpful."""
         """Generate mock listing for testing"""
         return {
             "title": f"{item_name} - {condition}",
-            "description": f"{description}\n\nCondition: {condition}\nPrice: ${price:.2f}\n\nThis is mock listing copy. Set ANTHROPIC_API_KEY for AI-generated listings.",
+            "description": f"{description}\n\nCondition: {condition}\nPrice: ${price:.2f}\n\nThis is mock listing copy. Set GEMINI_API_KEY for AI-generated listings.",
             "facebook_copy": f"🔥 {item_name} for sale!\n\n{description[:200]}\n\nCondition: {condition}\n💰 ${price:.2f}\n\nLocal pickup available. Message me with questions!",
             "short_description": description[:100],
             "hashtags": ["forsale", "marketplace"],

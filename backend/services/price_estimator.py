@@ -443,7 +443,7 @@ Provide realistic, data-driven pricing that balances quick turnover with fair va
             },
             "quick_sale_price": quick_sale,
             "pricing_factors": [
-                "Mock pricing - Set ANTHROPIC_API_KEY for real estimates",
+                "Mock pricing - Set GEMINI_API_KEY for real estimates",
                 f"Condition: {condition}"
             ],
             "market_demand": "medium",

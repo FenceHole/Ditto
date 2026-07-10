@@ -185,7 +185,7 @@ Be specific and detailed. If you can't identify something with confidence, indic
             "subcategory": "Consumer Electronics",
             "brand": "Generic",
             "model": "Model X",
-            "description": "This is a mock analysis. Set ANTHROPIC_API_KEY to enable real image analysis.",
+            "description": "This is a mock analysis. Set GEMINI_API_KEY to enable real image analysis.",
             "features": [
                 "Feature 1",
                 "Feature 2",

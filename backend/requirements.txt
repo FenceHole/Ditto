@@ -5,10 +5,7 @@ fastapi==0.109.0
 uvicorn[standard]==0.27.0
 python-multipart==0.0.6
 
-# AI/ML
-anthropic==0.18.1
-
-# HTTP Requests
+# HTTP Requests (also used to call the free Google Gemini API)
 requests==2.31.0
 httpx==0.26.0
 
@@ -19,8 +16,10 @@ python-dotenv==1.0.0
 # Image Processing
 Pillow==10.2.0
 
-# Facebook SDK (optional - for direct Graph API integration)
-# facebook-sdk==3.1.0
-
 # Utilities
 python-dateutil==2.8.2
+
+# OPTIONAL: only needed if you enable the browser poster (ENABLE_BROWSER_POSTER=true)
+# for a DEDICATED Facebook account. Install with:
+#   pip install playwright && playwright install chromium
+# playwright==1.44.0

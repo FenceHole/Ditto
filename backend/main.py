@@ -3,7 +3,7 @@ Marketplace Bot Analyzer - Main API Server
 FastAPI-based backend for item analysis and marketplace posting
 """
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
+from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -57,6 +57,41 @@ class PostRequest(BaseModel):
     item_id: str
     marketplaces: List[str]
     auto_post: bool = False
+
+
+def check_api_key(x_api_key: Optional[str] = Header(default=None)):
+    """
+    Simple API-key gate so an external caller (e.g. the user's 'nessie'
+    automation stack) can authenticate. If APP_API_KEY is unset, access is
+    open — this keeps local/dev use frictionless.
+    """
+    expected = os.getenv("APP_API_KEY")
+    if expected and x_api_key != expected:
+        raise HTTPException(status_code=401, detail="Invalid or missing X-API-Key")
+    return True
+
+
+def build_ready_to_post(item_name: str, price: Any, condition: str,
+                        listing_copy: Dict[str, Any]) -> str:
+    """
+    Assemble a single copy-paste-ready block for Facebook Marketplace.
+    This is the reliable deliverable: paste it into the Marketplace listing form.
+    """
+    title = listing_copy.get("title") or item_name
+    body = listing_copy.get("facebook_copy") or listing_copy.get("description") or ""
+    try:
+        price_str = f"${float(price):.0f}"
+    except (TypeError, ValueError):
+        price_str = str(price)
+
+    lines = [
+        f"TITLE: {title}",
+        f"PRICE: {price_str}",
+        f"CONDITION: {condition}",
+        "",
+        body.strip(),
+    ]
+    return "\n".join(lines).strip()
 
 
 @app.on_event("startup")
@@ -201,49 +236,165 @@ async def upload_images(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/analyze")
+async def analyze(
+    files: List[UploadFile] = File(...),
+    condition: str = "good",
+    notes: Optional[str] = None,
+    x_api_key: Optional[str] = Header(default=None),
+):
+    """
+    Clean integration endpoint for external automation (e.g. the user's 'nessie'
+    stack). Photos in -> one finished, paste-ready listing out.
+
+    Auth: send header `X-API-Key: <APP_API_KEY>` (only enforced if APP_API_KEY is set).
+
+    Returns a flat, predictable JSON object:
+        {
+          success, item_id, item_name, category, condition,
+          price, quick_sale_price, title, description, ready_to_post
+        }
+    `ready_to_post` is a single text block to paste straight into the
+    Facebook Marketplace "Create listing" form.
+    """
+    # Auth gate
+    check_api_key(x_api_key)
+
+    try:
+        if not files:
+            raise HTTPException(status_code=400, detail="No files uploaded")
+        if len(files) > 10:
+            raise HTTPException(status_code=400, detail="Maximum 10 images allowed")
+
+        # Save images
+        image_paths = []
+        for file in files:
+            if not file.content_type or not file.content_type.startswith("image/"):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"File {file.filename} is not an image"
+                )
+            image_paths.append(await storage_manager.save_upload(file))
+
+        # Identify item
+        analysis_result = await image_analyzer.analyze_images(
+            image_paths, additional_context=notes
+        )
+        if not analysis_result.get("identified"):
+            raise HTTPException(status_code=422, detail="Could not identify item from images")
+
+        # Price it
+        pricing_data = await price_estimator.estimate_price(
+            item_name=analysis_result["item_name"],
+            category=analysis_result["category"],
+            condition=condition,
+            brand=analysis_result.get("brand"),
+            attributes=analysis_result.get("attributes", {}),
+        )
+
+        # Rank marketplaces (used for internal record; Facebook is the primary target)
+        marketplace_recommendations = await marketplace_selector.select_marketplaces(
+            category=analysis_result["category"],
+            estimated_price=pricing_data.get("recommended_price", 0),
+            item_type=analysis_result["item_name"],
+            ebay_sold_data=pricing_data.get("ebay_sold_data"),
+        )
+
+        # Write the listing copy
+        listing_copy = await listing_generator.generate_listing(
+            item_name=analysis_result["item_name"],
+            description=analysis_result["description"],
+            condition=condition,
+            price=pricing_data.get("recommended_price", 0),
+            features=analysis_result.get("features", []),
+            additional_notes=notes,
+        )
+
+        ready_to_post = build_ready_to_post(
+            analysis_result["item_name"],
+            pricing_data.get("recommended_price", 0),
+            condition,
+            listing_copy,
+        )
+
+        # Persist so /api/post and history can reference it
+        item_listing = await db.create_listing(
+            item_name=analysis_result["item_name"],
+            category=analysis_result["category"],
+            brand=analysis_result.get("brand"),
+            condition=condition,
+            description=analysis_result["description"],
+            image_paths=image_paths,
+            pricing_data=pricing_data,
+            marketplace_recommendations=marketplace_recommendations,
+            listing_copy=listing_copy,
+            analysis_metadata=analysis_result,
+        )
+
+        return {
+            "success": True,
+            "item_id": item_listing.id,
+            "item_name": analysis_result["item_name"],
+            "category": analysis_result["category"],
+            "condition": condition,
+            "price": pricing_data.get("recommended_price", 0),
+            "quick_sale_price": pricing_data.get("quick_sale_price", 0),
+            "title": listing_copy.get("title", analysis_result["item_name"]),
+            "description": listing_copy.get("facebook_copy",
+                                            listing_copy.get("description", "")),
+            "ready_to_post": ready_to_post,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in analyze: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/post")
 async def post_to_marketplaces(
     request: PostRequest,
     background_tasks: BackgroundTasks
 ):
     """
-    Post item to selected marketplaces
+    Prepare a saved item for posting.
 
-    Args:
-        request: Posting configuration including item_id and target marketplaces
+    NOTE: Facebook Marketplace has no public API for posting personal listings,
+    so this does NOT call Facebook. It returns the finished, paste-ready listing
+    (`ready_to_post`) that you — or your automation driving a DEDICATED account —
+    paste into the Marketplace "Create listing" form.
 
-    Returns:
-        Posting status and URLs
+    An optional browser-automation poster exists (services/playwright_poster.py)
+    and only runs when ENABLE_BROWSER_POSTER=true, targeting the dedicated account.
     """
     try:
-        # Retrieve item from database
         item = await db.get_listing(request.item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
-        posting_results = {}
+        ready_to_post = build_ready_to_post(
+            item.item_name,
+            item.pricing_data.get("recommended_price", 0),
+            item.condition,
+            item.listing_copy,
+        )
 
-        # Post to each selected marketplace
-        for marketplace in request.marketplaces:
-            if marketplace.lower() == "facebook":
-                if request.auto_post:
-                    # Post immediately
-                    result = await facebook_poster.post_item(item)
-                    posting_results["facebook"] = result
-                else:
-                    # Return draft for review
-                    posting_results["facebook"] = {
-                        "status": "draft",
-                        "preview": await facebook_poster.preview_listing(item)
-                    }
+        posting_results = {
+            "status": "ready",
+            "method": "manual_paste",
+            "ready_to_post": ready_to_post,
+        }
 
-            # Add other marketplace integrations here
-            # elif marketplace.lower() == "craigslist":
-            #     result = await craigslist_poster.post_item(item)
-            # elif marketplace.lower() == "ebay":
-            #     result = await ebay_poster.post_item(item)
+        # Opt-in browser automation for the dedicated account only.
+        if os.getenv("ENABLE_BROWSER_POSTER", "false").lower() == "true":
+            try:
+                from services.playwright_poster import PlaywrightPoster
+                poster = PlaywrightPoster()
+                posting_results["browser_post"] = await poster.post_item(item)
+            except Exception as e:
+                posting_results["browser_post"] = {"status": "error", "message": str(e)}
 
-        # Update database with posting results
         await db.update_listing_status(
             request.item_id,
             posted_to=request.marketplaces,
